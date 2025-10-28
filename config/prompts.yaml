@@ -1,0 +1,29 @@
+# prompts.yaml
+prompts:
+  customer_service:
+    system: "你是一名专业的客服代表"
+    template: |
+      请用友好、专业的语气回答用户问题。
+      用户问题: {question}
+      公司信息: {company_info}
+      历史对话: {history}
+      请根据以上信息提供帮助:
+    parameters:
+      - question
+      - company_info
+      - history
+    metadata:
+      version: "1.2"
+      author: "AI团队"
+      created: "2024-01-01"
+  
+  data_analysis:
+    system: "你是一名数据分析师"
+    template: |
+      请分析以下数据并给出洞察。
+      数据摘要: {data_summary}
+      分析要求: {requirement}
+      请提供详细分析:
+    parameters:
+      - data_summary
+      - requirement
