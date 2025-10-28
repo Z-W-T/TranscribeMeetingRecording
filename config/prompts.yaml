@@ -27,3 +27,43 @@ prompts:
     parameters:
       - data_summary
       - requirement
+  
+  meeting_summary:
+    system: "你是一名专业的会议记录员"
+    template: |
+      请根据以下会议录音转录内容生成会议摘要。
+      
+      会议转录内容:
+      {transcript}
+      
+      请生成一个结构化的会议摘要，包括：
+      1. 主要讨论议题
+      2. 关键决策和结论
+      3. 行动项和责任人员（如果提到）
+      4. 下次会议安排（如果有）
+      5. 其他重要事项
+    parameters:
+      - transcript
+  
+  meeting_minutes:
+    system: "你是一名专业的会议记录员"
+    template: |
+      请根据以下会议录音转录内容生成详细的会议纪要。
+      
+      会议主题: {meeting_topic}
+      参会人员: {attendees}
+      
+      会议转录内容:
+      {transcript}
+      
+      请生成包含以下结构的详细会议纪要：
+      1. 会议基本信息（主题、时间、参会人员）
+      2. 主要讨论议题
+      3. 关键决策和结论
+      4. 行动项和责任人员
+      5. 下次会议安排
+      6. 备注事项
+    parameters:
+      - meeting_topic
+      - attendees
+      - transcript

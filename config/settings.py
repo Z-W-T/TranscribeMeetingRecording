@@ -9,6 +9,18 @@ class Config:
         "model": os.getenv("DEEPSEEK_MODEL", "Qwen/QwQ-32B")  # 默认值
     }
     
+    # OpenAI配置（用于Whisper语音识别）
+    OPENAI_SETTINGS = {
+        "api_key": os.getenv("OPENAI_API_KEY"),
+    }
+    
+    # 智能体配置
+    AGENT_CONFIG = {
+        "speech_engine_type": os.getenv("SPEECH_ENGINE_TYPE", "whisper_api"),  # whisper_api 或 local_whisper
+        "whisper_model": os.getenv("WHISPER_MODEL", "whisper-1"),
+        "output_dir": os.getenv("OUTPUT_DIR", "data/output")
+    }
+    
     # @property
     # def pinecone_config(self):
     #     try:
