@@ -71,3 +71,15 @@ prompts:
       - meeting_topic
       - attendees
       - transcript
+
+  meeting_key_points:
+    system: "你是一名专业的会议记录员"
+    template: |
+        请从以下会议录音转录中提取关键要点，每条要点以"-"开头。
+
+        会议转录内容：
+        {transcript}
+
+        请提取5-10个关键要点：
+    parameters:
+      - transcript
