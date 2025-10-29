@@ -117,12 +117,15 @@ class MeetingMinutesGenerator:
         Returns:
             List[str]: 关键要点列表
         """
-        prompt = f"""请从以下会议录音转录中提取关键要点，每条要点以"-"开头。
+        promt_manager = PromptManager(config_path="config/prompts.yaml")
+        promt_manager._load_prompts()
+        prompt = promt_manager.get_prompt(prompt_key='meeting_key_points', transcript=transcript)
+        # prompt = f"""请从以下会议录音转录中提取关键要点，每条要点以"-"开头。
 
-        会议转录内容：
-        {transcript}
+        # 会议转录内容：
+        # {transcript}
 
-        请提取5-10个关键要点："""
+        # 请提取5-10个关键要点："""
         
         result = call_deepseek_api(prompt, self.api_settings)
         # 解析要点
