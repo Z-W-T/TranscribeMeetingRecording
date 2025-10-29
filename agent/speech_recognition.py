@@ -36,7 +36,7 @@ class WhisperAPIEngine(SpeechRecognitionEngine):
         """
         try:
             from openai import OpenAI
-            self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"))
+            self.client = OpenAI(api_key=api_key or os.getenv("OPENAI_API_KEY"), base_url="https://work.poloapi.com/v1")
             self.model = model
         except ImportError:
             raise ImportError("请安装openai库: pip install openai")

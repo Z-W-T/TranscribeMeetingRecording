@@ -18,7 +18,9 @@ class Config:
     AGENT_CONFIG = {
         "speech_engine_type": os.getenv("SPEECH_ENGINE_TYPE", "whisper_api"),  # whisper_api 或 local_whisper
         "whisper_model": os.getenv("WHISPER_MODEL", "whisper-1"),
-        "output_dir": os.getenv("OUTPUT_DIR", "data/output")
+        "output_dir": os.getenv("OUTPUT_DIR", "data/output"),
+        # 默认的音频输入路径，可通过环境变量 AUDIO_INPUT 覆盖，或在运行时修改 Config().AGENT_CONFIG
+        "audio_input": os.getenv("AUDIO_INPUT", "data/dialogue_recording.mp3")
     }
     
     # @property

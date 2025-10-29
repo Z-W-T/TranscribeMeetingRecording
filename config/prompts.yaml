@@ -35,6 +35,8 @@ prompts:
       
       会议转录内容:
       {transcript}
+
+      额外背景信息：{context}
       
       请生成一个结构化的会议摘要，包括：
       1. 主要讨论议题
@@ -44,6 +46,7 @@ prompts:
       5. 其他重要事项
     parameters:
       - transcript
+      - context
   
   meeting_minutes:
     system: "你是一名专业的会议记录员"
@@ -55,6 +58,7 @@ prompts:
       
       会议转录内容:
       {transcript}
+      
       
       请生成包含以下结构的详细会议纪要：
       1. 会议基本信息（主题、时间、参会人员）

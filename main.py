@@ -13,34 +13,37 @@ def example_meeting_transcription():
         speech_engine_type=config.AGENT_CONFIG["speech_engine_type"],
         api_settings=config.DEEPSEEK_SETTINGS
     )
+    print('智能转录代理已创建，开始处理会议录音...')
     
-    # 处理会议音频
-    audio_file = "data/dialogue_recording.mp3"  # 替换为实际的音频文件路径
+    # 处理会议音频：从配置中读取（优先使用 config.AGENT_CONFIG['audio_input']，可通过环境变量 AUDIO_INPUT 覆盖）
+    audio_file = config.AGENT_CONFIG.get("audio_input")
+    print(f"Using audio file: {audio_file}")
     
-    try:
-        results = agent.process_meeting(
-            audio_input=audio_file,
-            generate_minutes=True,
-            generate_summary=True,
-            attendees=["张三", "李四", "王五"],
-            meeting_topic="项目进度讨论"
-        )
+    results = agent.process_meeting(
+        audio_input=audio_file,
+        generate_minutes=True,
+        generate_summary=True,
+        attendees=["张三", "李四", "王五"],
+        meeting_topic="项目进度讨论"
+    )
+    
+    # 保存结果到文件
+    agent.save_results(results=results, output_path=config.AGENT_CONFIG["output_dir"])
+
+    # 打印结果
+    print("=" * 60)
+    print("会议转录完成")
+    print("=" * 60)
+    print("\n【摘要】\n")
+    print(results.get("summary", ""))
+    print("\n【完整转录】\n")
+    print(results.get("transcript", ""))
         
-        # 保存结果
-        agent.save_results(results, output_path=config.AGENT_CONFIG["output_dir"])
-        
-        # 打印结果
-        print("=" * 60)
-        print("会议转录完成")
-        print("=" * 60)
-        print("\n【摘要】\n")
-        print(results.get("summary", ""))
-        print("\n【完整转录】\n")
-        print(results.get("transcript", ""))
-        
-    except FileNotFoundError:
-        print(f"错误：找不到音频文件 {audio_file}")
-        print("请确保音频文件存在，并修改代码中的audio_file路径")
+    # except Exception as e:
+    #     # 捕获并输出任何异常
+    #     print(f"错误：处理音频时发生异常: {e}")
+    #     # 如需调试完整堆栈信息，可取消注释下一行
+    #     # import traceback; traceback.print_exc()
 
 
 def example_key_points_extraction():
@@ -53,7 +56,7 @@ def example_key_points_extraction():
         api_settings=config.DEEPSEEK_SETTINGS
     )
     
-    audio_file = "path/to/your/meeting_audio.mp3"
+    audio_file = "data/dialogue_recording.mp3"
     
     try:
         key_points = agent.extract_key_points(audio_file)

@@ -65,7 +65,9 @@ class TranscriptionAgent:
         """
         # 1. 转录语音
         transcript = self.transcribe_audio(audio_input)
-        
+        # transcript_path = os.getenv("TRANSCRIBED_TEXT_PATH")
+        # with open(transcript_path, "r", encoding="utf-8") as f:
+        #     transcript = f.read()
         result = {
             "transcript": transcript
         }

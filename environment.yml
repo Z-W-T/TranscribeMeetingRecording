@@ -11,10 +11,12 @@ dependencies:
   - certifi=2025.10.5=py310haa95532_0
   - cffi=2.0.0=py310h02ab6af_0
   - charset-normalizer=3.3.2=pyhd3eb1b0_0
+  - click=8.2.1=py310haa95532_0
   - colorama=0.4.6=py310haa95532_0
   - distro=1.9.0=py310haa95532_0
   - exceptiongroup=1.2.0=py310haa95532_0
   - expat=2.7.1=h8ddb27b_0
+  - git=2.51.0=haa95532_1
   - greenlet=3.2.4=py310h885b0b7_0
   - h11=0.16.0=py310haa95532_0
   - httpcore=1.0.9=py310haa95532_0
@@ -41,6 +43,7 @@ dependencies:
   - pydantic-core=2.41.4=py310h114bc41_0
   - pysocks=1.7.1=py310haa95532_0
   - python=3.10.19=h981015d_0
+  - python-dotenv=1.1.0=py310haa95532_0
   - pyyaml=6.0.2=py310h827c3e9_0
   - regex=2025.9.1=py310h02ab6af_0
   - requests=2.32.5=py310haa95532_0

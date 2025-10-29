@@ -36,7 +36,7 @@ def parse_api_response(response_json):
 def call_deepseek_api(prompt, settings):
     """对外暴露的主函数：调用API、返回模型应答。"""
     url = "https://api.siliconflow.cn/v1/chat/completions"
-    headers = build_headers(settings)
+    headers = build_headers(settings)  
     data = build_request_data(prompt, settings)
     response_json = send_api_request(url, headers, data)
     return parse_api_response(response_json)
