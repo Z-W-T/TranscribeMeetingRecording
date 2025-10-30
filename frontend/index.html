@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会议转录前端</title>
+    <style>
+      body { font-family: Arial, Helvetica, sans-serif; max-width: 900px; margin: 2rem auto; }
+      label { display:block; margin-top: 1rem }
+      textarea { width:100%; height: 12rem }
+      pre { background:#f6f6f6; padding:1rem; overflow:auto }
+    </style>
+  </head>
+  <body>
+    <h1>会议转录 & 纪要生成</h1>
+
+    <form id="uploadForm">
+      <label>选择音频文件 (mp3/wav 等)
+        <input type="file" name="file" id="fileInput" accept="audio/*" required />
+      </label>
+
+      <label>参会人员（逗号分隔，可选）
+        <input type="text" name="attendees" id="attendees" placeholder="张三, 李四" />
+      </label>
+
+      <label>会议主题（可选）
+        <input type="text" name="meeting_topic" id="meeting_topic" placeholder="项目进度讨论" />
+      </label>
+
+      <label>
+        <input type="checkbox" id="generate_minutes" checked /> 生成详细纪要
+      </label>
+      <label>
+        <input type="checkbox" id="generate_summary" checked /> 生成摘要
+      </label>
+
+      <button type="submit">上传并处理</button>
+    </form>
+
+    <h2>处理结果</h2>
+    <div id="status">等待上传</div>
+    <h3>摘要</h3>
+    <pre id="summary"></pre>
+    <h3>完整转录</h3>
+    <pre id="transcript"></pre>
+
+    <script>
+      const form = document.getElementById('uploadForm');
+      const status = document.getElementById('status');
+      const summaryEl = document.getElementById('summary');
+      const transcriptEl = document.getElementById('transcript');
+
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const fileInput = document.getElementById('fileInput');
+        const attendees = document.getElementById('attendees').value;
+        const meeting_topic = document.getElementById('meeting_topic').value;
+        const generate_minutes = document.getElementById('generate_minutes').checked;
+        const generate_summary = document.getElementById('generate_summary').checked;
+
+        if (!fileInput.files.length) return alert('请选择音频文件');
+        const fd = new FormData();
+        fd.append('file', fileInput.files[0]);
+        fd.append('attendees', attendees);
+        fd.append('meeting_topic', meeting_topic);
+        fd.append('generate_minutes', generate_minutes);
+        fd.append('generate_summary', generate_summary);
+
+        status.textContent = '上传中...';
+        summaryEl.textContent = '';
+        transcriptEl.textContent = '';
+
+        try {
+          const resp = await fetch('/api/process', { method: 'POST', body: fd });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            status.textContent = '处理失败: ' + (err.error || resp.statusText);
+            return;
+          }
+          const data = await resp.json();
+          status.textContent = '处理完成';
+          summaryEl.textContent = data.summary || data.summary_text || '';
+          transcriptEl.textContent = data.transcript || data.transcription || '';
+        } catch (e) {
+          status.textContent = '请求出错: ' + e.message;
+        }
+      });
+    </script>
+  </body>
+</html>
