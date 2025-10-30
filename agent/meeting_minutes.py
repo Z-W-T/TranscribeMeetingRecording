@@ -3,7 +3,7 @@
 """
 from typing import Dict, List, Optional
 from datetime import datetime
-from utils.api_client import call_deepseek_api
+from utils.api_client import DeepseekAPI
 from config.prompts_manager import PromptManager
 
 class MeetingMinutesGenerator:
@@ -17,6 +17,22 @@ class MeetingMinutesGenerator:
             api_settings: API配置，包含api_key和model
         """
         self.api_settings = api_settings
+        # Instantiate DeepseekAPI client for making LLM calls
+        api_key = None
+        model = None
+        try:
+            api_key = api_settings.get("api_key")
+            model = api_settings.get("model")
+        except Exception:
+            # api_settings may be None or not a dict
+            api_key = None
+            model = None
+
+        if api_key:
+            self.client = DeepseekAPI(api_key=api_key, model=model or "gpt-3.5-turbo")
+        else:
+            # Lazy: set client to None and let calls fail clearly if no API key provided
+            self.client = None
     
     def generate_summary(self, transcript: str, additional_context: Optional[str] = None) -> str:
         """
@@ -30,7 +46,9 @@ class MeetingMinutesGenerator:
             str: 会议摘要
         """
         prompt = self._build_summary_prompt(transcript, additional_context)
-        summary = call_deepseek_api(prompt, self.api_settings)
+        if not self.client:
+            raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
+        summary = self.client.call_api(prompt)
         return summary
     
     def generate_detailed_minutes(
@@ -51,7 +69,9 @@ class MeetingMinutesGenerator:
             Dict: 包含详细会议纪要的字典
         """
         prompt = self._build_minutes_prompt(transcript, attendees, meeting_topic)
-        minutes_text = call_deepseek_api(prompt, self.api_settings)
+        if not self.client:
+            raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
+        minutes_text = self.client.call_api(prompt)
         
         return {
             "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -127,7 +147,9 @@ class MeetingMinutesGenerator:
 
         # 请提取5-10个关键要点："""
         
-        result = call_deepseek_api(prompt, self.api_settings)
+        if not self.client:
+            raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
+        result = self.client.call_api(prompt)
         # 解析要点
         key_points = [line.strip()[1:].strip() for line in result.split("\n") if line.strip().startswith("-")]
         return key_points or [result]

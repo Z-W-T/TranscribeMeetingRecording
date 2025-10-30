@@ -5,7 +5,7 @@
 import os
 from typing import Optional, Dict, BinaryIO, List
 from pathlib import Path
-from agent.speech_recognition import create_speech_engine, SpeechRecognitionEngine
+from agent.speech_recognition import SpeechRecognitionEngine
 from agent.meeting_minutes import MeetingMinutesGenerator
 
 
@@ -14,19 +14,19 @@ class TranscriptionAgent:
     
     def __init__(
         self,
-        speech_engine_type: str = "whisper_api",
-        api_settings: Optional[Dict] = None
+        agent_setting: Dict,
+        minutes_generator_setting: Dict
     ):
         """
         初始化智能转录代理
         
         Args:
-            speech_engine_type: 语音识别引擎类型 ("whisper_api", "local_whisper")
-            api_settings: API配置（包含api_key和model）
+            agent_setting: 智能体配置字典(包含模型名称，输入音频路径，api_key,输出路径)
         """
-        self.speech_engine = create_speech_engine(engine_type=speech_engine_type)
+        self.speech_engine =SpeechRecognitionEngine(api_key=agent_setting.get("api_key"),
+                                                    model=agent_setting.get("whisper_model"))
         self.minutes_generator = MeetingMinutesGenerator(
-            api_settings=api_settings or {}
+            api_settings=minutes_generator_setting
         )
     
     def transcribe_audio(self, audio_input, language: str = "zh") -> str:

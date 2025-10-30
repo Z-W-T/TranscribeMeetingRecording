@@ -10,8 +10,8 @@ def example_meeting_transcription():
     
     # 创建智能转录代理
     agent = TranscriptionAgent(
-        speech_engine_type=config.AGENT_CONFIG["speech_engine_type"],
-        api_settings=config.DEEPSEEK_SETTINGS
+        agent_setting = config.AGENT_CONFIG,
+        minutes_generator_setting= config.DEEPSEEK_SETTINGS
     )
     print('智能转录代理已创建，开始处理会议录音...')
     
@@ -51,13 +51,15 @@ def example_key_points_extraction():
     load_dotenv()
     config = Config()
     
+    # 创建智能转录代理
     agent = TranscriptionAgent(
-        speech_engine_type=config.AGENT_CONFIG["speech_engine_type"],
-        api_settings=config.DEEPSEEK_SETTINGS
+        agent_setting = config.AGENT_CONFIG,
+        minutes_generator_setting= config.DEEPSEEK_SETTINGS
     )
+    print('智能转录代理已创建，开始提取关键要点...')
     
-    audio_file = "data/dialogue_recording.mp3"
-    
+    audio_file = config.AGENT_CONFIG.get("audio_input")
+    print(f"Using audio file: {audio_file}")
     try:
         key_points = agent.extract_key_points(audio_file)
         
@@ -73,7 +75,7 @@ def example_key_points_extraction():
 
 if __name__ == "__main__":
     # 运行示例
-    example_meeting_transcription()
+    # example_meeting_transcription()
     
     # 取消注释以下行来运行关键要点提取示例
-    # example_key_points_extraction()
+    example_key_points_extraction()
