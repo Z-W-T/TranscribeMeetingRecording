@@ -22,6 +22,7 @@ class Config:
     # 功能配置
     USAGE_CONFIG = {
         "enable_meeting_transcription": True,
+        "enable_meeting_transcription": True,
         "enable_key_points_extraction": True,
         "enable_technical_terms_explanation": True
     }
