@@ -83,3 +83,15 @@ prompts:
         请提取5-10个关键要点：
     parameters:
       - transcript
+
+  meeting_technical_term_explanation:
+    system: "你是一名专业的会议记录员"
+    template: |
+        请从以下会议录音转录中识别并解释所有专有名词。
+
+        会议转录内容：
+        {transcript}
+
+        请列出较难理解的专有名词及其简要解释,必要时提供示例便于理解。格式为“-key:value”：
+    parameters:
+      - transcript
