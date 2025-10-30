@@ -2,7 +2,24 @@ from dotenv import load_dotenv
 from config.settings import Config
 from agent.transcription_agent import TranscriptionAgent
 
-def example_meeting_transcription():
+def example_meeting_transcription(agent, config):
+    """示例：处理会议录音转录为文本"""
+    audio_file = config.AGENT_CONFIG.get("audio_input")
+    print(f"Using audio file: {audio_file}")
+    print('开始转录文本...')
+
+    transcript = agent.transcribe_audio(audio_input=audio_file)
+
+    # 打印结果
+    print("=" * 60)
+    print("会议转录文本")
+    print("=" * 60) 
+    print("\n【转录文本】\n")
+    print(f'{transcript}')
+
+    return transcript
+
+def example_meeting_summary_generation(agent, config):
     """示例：处理会议录音并生成纪要"""
     # 处理会议音频：从配置中读取（优先使用 config.AGENT_CONFIG['audio_input']，可通过环境变量 AUDIO_INPUT 覆盖）
     audio_file = config.AGENT_CONFIG.get("audio_input")
@@ -26,7 +43,7 @@ def example_meeting_transcription():
     return summary
 
 
-def example_key_points_extraction():
+def example_key_points_extraction(agent, config):
     """示例：提取关键要点"""
     audio_file = config.AGENT_CONFIG.get("audio_input")
     print(f"Using audio file: {audio_file}")
@@ -45,7 +62,7 @@ def example_key_points_extraction():
     
     return key_points
 
-def example_technical_terms_explanation():
+def example_technical_terms_explanation(agent, config):
     """示例：解释技术术语"""
     audio_file = config.AGENT_CONFIG.get("audio_input")
     print(f"Using audio file: {audio_file}")
@@ -75,14 +92,16 @@ if __name__ == "__main__":
     )
     # 记录结果字典
     results = {}
+    # if config.USAGE_CONFIG.get("enable_meeting_transcription"):
+    #     results['transcript'] = example_meeting_summary_generation(agent, config)
 
-    if config.USAGE_CONFIG.get("enable_meeting_transcription"):
-        results['summary'] = example_meeting_transcription()
+    # if config.USAGE_CONFIG.get("enable_meeting_transcription"):
+    #     results['summary'] = example_meeting_summary_generation(agent, config)
     
-    if config.USAGE_CONFIG.get("enable_key_points_extraction"):
-        results['key_point'] = example_key_points_extraction()
+    # if config.USAGE_CONFIG.get("enable_key_points_extraction"):
+    #     results['key_point'] = example_key_points_extraction(agent, config)
 
     if config.USAGE_CONFIG.get("enable_technical_terms_explanation"):
-        results['terms'] = example_technical_terms_explanation()
+        results['technical_terms'] = example_technical_terms_explanation(agent, config)
 
     agent.save_results(results, output_path=config.AGENT_CONFIG['output_dir'])
