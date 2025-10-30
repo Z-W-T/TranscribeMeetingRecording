@@ -152,7 +152,20 @@ print(transcript)
 
 ### 会议纪要生成
 
-使用配置中的 `DEEPSEEK_SETTINGS` 来调用 LLM 生成会议纪要。
+使用配置中的 `DEEPSEEK_SETTINGS` 来调用 LLM 生成会议纪要。项目已将 DeepSeek 调用封装为类 `DeepseekAPI`（位于 `utils/api_client.py`），示例：
+
+```python
+from config.settings import Config
+from utils.api_client import DeepseekAPI
+
+config = Config()
+ds = DeepseekAPI(api_key=config.DEEPSEEK_SETTINGS.get("api_key"), model=config.DEEPSEEK_SETTINGS.get("model"))
+prompt = "请为下面的会议转录生成摘要..."
+summary = ds.call_api(prompt)
+print(summary)
+```
+
+大多数使用场景无需直接调用 `DeepseekAPI`：主智能体（`TranscriptionAgent` / `MeetingMinutesGenerator`）会在内部使用 `api_settings` 自动构造客户端并调用 `call_api()`。
 
 ## 运行示例
 
