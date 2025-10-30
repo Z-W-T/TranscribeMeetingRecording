@@ -10,7 +10,6 @@ class Config:
         "model": os.getenv("DEEPSEEK_MODEL", "Qwen/QwQ-32B")  # 默认值
     }
     
-    
     # 智能体配置
     AGENT_CONFIG = {
         "whisper_model": os.getenv("WHISPER_MODEL", "whisper-1"),
@@ -18,6 +17,13 @@ class Config:
         # 默认的音频输入路径，可通过环境变量 AUDIO_INPUT 覆盖，或在运行时修改 Config().AGENT_CONFIG
         "audio_input": os.getenv("AUDIO_INPUT", "data/dialogue_recording.mp3"),
         "api_key": os.getenv("OPENAI_API_KEY")
+    }
+
+    # 功能配置
+    USAGE_CONFIG = {
+        "enable_meeting_transcription": True,
+        "enable_key_points_extraction": True,
+        "enable_technical_terms_explanation": True
     }
     
     # @property
