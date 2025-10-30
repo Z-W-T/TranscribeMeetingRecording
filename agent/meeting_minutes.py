@@ -127,6 +127,19 @@ class MeetingMinutesGenerator:
         # """
         # return prompt
     
+    def _build_key_points_prompt(self, transcript: str) -> str:
+        """构建关键要点提取prompt"""
+        prompt_manager = PromptManager(config_path="config/prompts.yaml")
+        prompt_manager._load_prompts()
+        prompt = prompt_manager.get_prompt(prompt_key='meeting_key_points', transcript=transcript)
+        return prompt
+        # prompt = f"""请从以下会议录音转录中提取关键要点，每条要点以"-"开头。
+
+        # 会议转录内容：
+        # {transcript}
+
+        # 请提取5-10个关键要点："""
+
     def extract_key_points(self, transcript: str) -> List[str]:
         """
         提取关键要点
@@ -137,20 +150,45 @@ class MeetingMinutesGenerator:
         Returns:
             List[str]: 关键要点列表
         """
-        promt_manager = PromptManager(config_path="config/prompts.yaml")
-        promt_manager._load_prompts()
-        prompt = promt_manager.get_prompt(prompt_key='meeting_key_points', transcript=transcript)
-        # prompt = f"""请从以下会议录音转录中提取关键要点，每条要点以"-"开头。
-
-        # 会议转录内容：
-        # {transcript}
-
-        # 请提取5-10个关键要点："""
-        
+        prompt = self._build_key_points_prompt(transcript)
         if not self.client:
             raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
         result = self.client.call_api(prompt)
         # 解析要点
         key_points = [line.strip()[1:].strip() for line in result.split("\n") if line.strip().startswith("-")]
         return key_points or [result]
+    
+    def _build_technical_terms_explanation_prompt(self, transcript: str) -> str:
+        """构建专有名词解释prompt"""
+        prompt_manager = PromptManager(config_path="config/prompts.yaml")
+        prompt_manager._load_prompts()
+        prompt = prompt_manager.get_prompt(prompt_key='meeting_technical_term_explanation', transcript=transcript)
+        return prompt
+        # prompt = f"""请从以下会议录音转录中识别并解释所有专有名词。
+
+        # 会议转录内容：
+        # {transcript}
+
+        # 请列出每个专有名词及其简要解释："""
+    
+    def explain_technical_terms(self, transcript: str) -> list[str]:
+        """
+        解释技术术语
+        
+        Args:
+            transcript: 会议转录文本
+            
+        Returns:
+            Dict[str:str]: 术语解释列表
+        """
+        prompt = self._build_technical_terms_explanation_prompt(transcript)  
+        
+        if not self.client:
+            raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
+        result = self.client.call_api(prompt)
+        # 解析术语解释
+        terms = {line.strip()[1:].strip() for line in result.split("\n") if line.strip().startswith("-")} 
+        return terms
+
+        
 

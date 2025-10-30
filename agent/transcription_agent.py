@@ -22,6 +22,7 @@ class TranscriptionAgent:
         
         Args:
             agent_setting: 智能体配置字典(包含模型名称，输入音频路径，api_key,输出路径)
+            minutes_generator_setting: 会议纪要生成器配置字典(包含api_key,模型名称)
         """
         self.speech_engine =SpeechRecognitionEngine(api_key=agent_setting.get("api_key"),
                                                     model=agent_setting.get("whisper_model"))
@@ -42,51 +43,22 @@ class TranscriptionAgent:
         """
         return self.speech_engine.transcribe(audio_input)
     
-    def process_meeting(
+    def generate_summary(
         self,
         audio_input,
-        generate_minutes: bool = True,
-        generate_summary: bool = True,
-        attendees: Optional[List[str]] = None,
-        meeting_topic: Optional[str] = None
-    ) -> Dict:
+    ) -> str:
         """
         处理会议音频，生成转录和纪要
         
         Args:
             audio_input: 音频文件路径或文件对象
-            generate_minutes: 是否生成详细纪要
-            generate_summary: 是否生成摘要
-            attendees: 参会人员列表
-            meeting_topic: 会议主题
             
         Returns:
-            Dict: 包含转录、摘要和详细纪要的字典
+            str: 会议纪要
         """
-        # 1. 转录语音
         transcript = self.transcribe_audio(audio_input)
-        # transcript_path = os.getenv("TRANSCRIBED_TEXT_PATH")
-        # with open(transcript_path, "r", encoding="utf-8") as f:
-        #     transcript = f.read()
-        result = {
-            "transcript": transcript
-        }
+        return self.minutes_generator.generate_summary(transcript)
         
-        # 2. 生成摘要（如果需要）
-        if generate_summary:
-            summary = self.minutes_generator.generate_summary(transcript)
-            result["summary"] = summary
-        
-        # 3. 生成详细纪要（如果需要）
-        if generate_minutes:
-            minutes = self.minutes_generator.generate_detailed_minutes(
-                transcript=transcript,
-                attendees=attendees,
-                meeting_topic=meeting_topic
-            )
-            result.update(minutes)
-        
-        return result
     
     def extract_key_points(self, audio_input) -> List[str]:
         """
@@ -101,6 +73,19 @@ class TranscriptionAgent:
         transcript = self.transcribe_audio(audio_input)
         return self.minutes_generator.extract_key_points(transcript)
     
+    def explain_technical_terms(self, audio_input) -> List[str]:
+        """
+        解释音频中的技术术语
+        
+        Args:
+            audio_input: 音频文件路径或文件对象
+            
+        Returns:
+            Dict[str, str]: 术语及其解释的字典
+        """
+        transcript = self.transcribe_audio(audio_input)
+        return self.minutes_generator.explain_technical_terms(transcript)
+    
     def save_results(self, results: Dict, output_path: str = "output"):
         """
         保存处理结果到文件
@@ -114,30 +99,33 @@ class TranscriptionAgent:
         
         # 保存转录文本
         if "transcript" in results:
-            transcript_file = output_dir / "transcript.txt"
+            transcript_file = output_dir / "transcript.md"
+            if not transcript_file.exists():
+                transcript_file.touch()
             transcript_file.write_text(results["transcript"], encoding="utf-8")
         
         # 保存摘要
         if "summary" in results:
-            summary_file = output_dir / "summary.txt"
+            summary_file = output_dir / "summary.md"
+            if not summary_file.exists():
+                summary_file.touch()
             summary_file.write_text(results["summary"], encoding="utf-8")
+
+        # 保存关键要点
+        if "key_points" in results:
+            key_points_file = output_dir / "key_points.md"
+            if not key_points_file.exists():
+                key_points_file.touch()
+            content = "\n".join([f"- {point}" for point in results["key_points"]])
+            key_points_file.write_text(content, encoding="utf-8")
+
+        # 保存技术术语解释
+        if "technical_terms" in results:
+            terms_file = output_dir / "technical_terms.md"
+            if not terms_file.exists():
+                terms_file.touch()
+            content = "\n".join([f"- {term}" for term in results["technical_terms"]])
+            terms_file.write_text(content, encoding="utf-8")
         
-        # 保存完整纪要
-        if "date" in results:  # 如果生成的是详细纪要
-            minutes_file = output_dir / "meeting_minutes.md"
-            content = f"""# 会议纪要
-
-**日期**: {results.get('date', 'N/A')}
-**主题**: {results.get('topic', 'N/A')}
-**参会人员**: {', '.join(results.get('attendees', []))}
-
-## 摘要
-
-{results.get('summary', '')}
-
-## 完整转录
-
-{results.get('transcript', '')}
-"""
-            minutes_file.write_text(content, encoding="utf-8")
+        print(f"Results saved to {output_dir.resolve()}")
 
