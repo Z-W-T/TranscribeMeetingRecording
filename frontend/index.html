@@ -3,88 +3,348 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>会议转录前端</title>
+    <title>会议转录 · 前端</title>
     <style>
-      body { font-family: Arial, Helvetica, sans-serif; max-width: 900px; margin: 2rem auto; }
-      label { display:block; margin-top: 1rem }
-      textarea { width:100%; height: 12rem }
-      pre { background:#f6f6f6; padding:1rem; overflow:auto }
+      :root{
+        --bg:#f4f7fb; --card:#ffffff; --accent:#5b8def; --muted:#6b7280; --success:#10b981;
+      }
+      *{box-sizing:border-box}
+      body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#eef5ff 0%, #fdfefe 100%); margin:0; padding:2rem; color:#111}
+      .container{max-width:980px;margin:0 auto}
+      header{display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem}
+      .logo{width:56px;height:56px;background:var(--card);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(91,141,239,0.12)}
+      h1{font-size:1.25rem;margin:0}
+      p.lead{color:var(--muted);margin:0;font-size:0.95rem}
+
+      .card{background:var(--card);border-radius:12px;padding:1.25rem;box-shadow:0 6px 20px rgba(12,24,48,0.06)}
+      .grid{display:grid;grid-template-columns:1fr 360px;gap:1rem}
+
+      /* left column */
+      .drop-area{border:2px dashed #e6eefc;border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.75rem;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(91,141,239,0.02), transparent)}
+      .drop-area.dragover{background:linear-gradient(180deg, rgba(91,141,239,0.06), transparent);border-color:var(--accent)}
+      .file-info{width:100%;display:flex;align-items:center;gap:.75rem}
+      .file-name{font-weight:600}
+      .muted{color:var(--muted);font-size:.9rem}
+
+      .controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem}
+      .toggle{display:inline-flex;align-items:center;gap:.5rem;padding:.5rem .6rem;border-radius:8px;background:#f7f9ff;border:1px solid #eef3ff;cursor:pointer}
+      .toggle svg{width:18px;height:18px;opacity:.95}
+      .toggle input{display:none}
+      .toggle.active{background:linear-gradient(90deg,var(--accent),#7fb1ff);color:white;border-color:transparent}
+
+      .btn{background:var(--accent);color:white;padding:.6rem .9rem;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+      .btn:disabled{opacity:.6;cursor:default}
+
+      /* right column */
+      .aside h3{margin:.2rem 0 .6rem}
+      pre{background:#0f1724;color:#e6eefc;padding:1rem;border-radius:8px;white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto}
+
+      .status{display:flex;align-items:center;gap:.6rem;color:var(--muted);margin-top:.6rem}
+      .spinner{width:16px;height:16px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
+
+      .downloads{display:flex;gap:.5rem;margin-top:.6rem}
+      .chip{background:#f3f4f6;padding:.4rem .6rem;border-radius:999px;border:1px solid #e6e9ef;font-weight:600}
+
+      footer{margin-top:1rem;color:var(--muted);font-size:.9rem}
     </style>
   </head>
   <body>
-    <h1>会议转录 & 纪要生成</h1>
+    <div class="container">
+      <header>
+        <div class="logo" aria-hidden>
+          <!-- simple mic SVG -->
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z" stroke="#5b8def" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 11v2a7 7 0 0 1-14 0v-2" stroke="#92b6ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div>
+          <h1>会议转录与纪要生成</h1>
+          <p class="lead">上传音频文件，自动转录并生成摘要 / 详细纪要与关键要点。</p>
+        </div>
+      </header>
 
-    <form id="uploadForm">
-      <label>选择音频文件 (mp3/wav 等)
-        <input type="file" name="file" id="fileInput" accept="audio/*" required />
-      </label>
+      <div class="card grid">
+        <div>
+          <div id="dropArea" class="drop-area" tabindex="0">
+            <div style="display:flex;align-items:center;gap:1rem">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none"><path d="M12 3v11" stroke="#5b8def" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 7l4-4 4 4" stroke="#92b6ff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 15a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4" stroke="#cfe0ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <div>
+                <div class="file-name" id="promptText">拖放或点击以选择音频文件</div>
+                <div class="muted">支持 MP3 / WAV / M4A / FLAC。最大文件视后端限制而定。</div>
+              </div>
+            </div>
+            <input id="fileInput" type="file" accept="audio/*" style="display:none" />
+          </div>
 
-      <label>参会人员（逗号分隔，可选）
-        <input type="text" name="attendees" id="attendees" placeholder="张三, 李四" />
-      </label>
+          <div style="margin-top:0.9rem;display:flex;gap:.75rem;align-items:center">
+            <input id="attendees" placeholder="参会人员，逗号分隔（可选）" style="flex:1;padding:.6rem;border-radius:8px;border:1px solid #e6eefc" />
+            <input id="meeting_topic" placeholder="会议主题（可选）" style="width:260px;padding:.6rem;border-radius:8px;border:1px solid #e6eefc" />
+          </div>
 
-      <label>会议主题（可选）
-        <input type="text" name="meeting_topic" id="meeting_topic" placeholder="项目进度讨论" />
-      </label>
+          <div class="controls">
+            <label class="toggle active" id="toggleSummary" title="生成摘要">
+              <input type="checkbox" id="generate_summary" checked />
+              <!-- summary icon -->
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 7h8M8 12h8M8 17h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              摘要
+              <span id="status_summary" style="margin-left:6px;font-size:0.85rem;color:var(--muted)"></span>
+            </label>
 
-      <label>
-        <input type="checkbox" id="generate_minutes" checked /> 生成详细纪要
-      </label>
-      <label>
-        <input type="checkbox" id="generate_summary" checked /> 生成摘要
-      </label>
+            <label class="toggle active" id="toggleMinutes" title="包含完整转录">
+              <input type="checkbox" id="generate_minutes" checked />
+              <!-- transcript icon -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 10h16M4 14h16M4 18h16" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              完整转录
+              <span id="status_full_transcript" style="margin-left:6px;font-size:0.85rem;color:var(--muted)"></span>
+            </label>
 
-      <button type="submit">上传并处理</button>
-    </form>
+            <label class="toggle" id="toggleKeyPoints" title="提取关键要点">
+              <input type="checkbox" id="generate_keypoints" />
+              <!-- key points icon -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h.01M12 12h7M5 6h.01M12 6h7M5 18h.01M12 18h7" stroke="#3b82f6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              要点
+              <span id="status_key_points" style="margin-left:6px;font-size:0.85rem;color:var(--muted)"></span>
+            </label>
 
-    <h2>处理结果</h2>
-    <div id="status">等待上传</div>
-    <h3>摘要</h3>
-    <pre id="summary"></pre>
-    <h3>完整转录</h3>
-    <pre id="transcript"></pre>
+            <label class="toggle" id="toggleTerms" title="解释专业术语">
+              <input type="checkbox" id="generate_terms" />
+              <!-- terms icon -->
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 2v6" stroke="#3b82f6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 8h10M7 12h10M7 16h7" stroke="#3b82f6" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              术语
+              <span id="status_terms" style="margin-left:6px;font-size:0.85rem;color:var(--muted)"></span>
+            </label>
+
+            <button id="submitBtn" class="btn">上传并处理</button>
+          </div>
+
+          <div class="status" id="statusRow"><div class="muted">等待上传</div></div>
+          <div style="margin-top:.5rem;color:var(--muted);font-size:.9rem" id="selectedOptions">已选：摘要、完整转录</div>
+        </div>
+
+        <aside class="aside">
+          <h3>处理输出</h3>
+          <div class="card" style="padding:.75rem">
+            <!-- Downloads panel (separate from text outputs) -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+              <div class="muted">下载文件</div>
+              <div id="downloadPanel" style="display:flex;gap:.5rem"></div>
+            </div>
+
+            <div style="height:6px"></div>
+            <div style="display:flex;gap:.5rem;align-items:center;justify-content:space-between">
+              <div class="muted">摘要</div>
+            </div>
+            <pre id="summary">（等待结果）</pre>
+
+            <div style="height:8px"></div>
+
+            <div style="display:flex;gap:.5rem;align-items:center;justify-content:space-between">
+              <div class="muted">完整转录</div>
+            </div>
+            <pre id="transcript">（等待结果）</pre>
+            <div style="height:8px"></div>
+            <div style="display:flex;gap:.5rem;align-items:center;justify-content:space-between">
+              <div class="muted">关键要点</div>
+            </div>
+            <pre id="key_points">（如选择，处理后显示）</pre>
+            <div style="height:8px"></div>
+            <div style="display:flex;gap:.5rem;align-items:center;justify-content:space-between">
+              <div class="muted">专业术语解释</div>
+            </div>
+            <pre id="technical_terms">（如选择，处理后显示）</pre>
+          </div>
+        </aside>
+      </div>
+
+      <footer>提示：确保后端已运行并设置了正确的 API Key（若使用远程模型）。</footer>
+    </div>
 
     <script>
-      const form = document.getElementById('uploadForm');
-      const status = document.getElementById('status');
+      // Elements
+      const dropArea = document.getElementById('dropArea');
+      const fileInput = document.getElementById('fileInput');
+      const promptText = document.getElementById('promptText');
+      const submitBtn = document.getElementById('submitBtn');
+      const statusRow = document.getElementById('statusRow');
       const summaryEl = document.getElementById('summary');
       const transcriptEl = document.getElementById('transcript');
+  const downloadPanel = document.getElementById('downloadPanel');
 
-      form.addEventListener('submit', async (ev) => {
-        ev.preventDefault();
-        const fileInput = document.getElementById('fileInput');
-        const attendees = document.getElementById('attendees').value;
-        const meeting_topic = document.getElementById('meeting_topic').value;
-        const generate_minutes = document.getElementById('generate_minutes').checked;
-        const generate_summary = document.getElementById('generate_summary').checked;
+      // Toggle buttons
+      function toggleLabel(labelEl, checkboxId){
+        const cb = document.getElementById(checkboxId);
+        labelEl.classList.toggle('active', cb.checked);
+      }
+      document.getElementById('toggleSummary').addEventListener('click', ()=>{const cb=document.getElementById('generate_summary');cb.checked=!cb.checked;toggleLabel(document.getElementById('toggleSummary'),'generate_summary'); updateSelectedOptions();});
+      document.getElementById('toggleMinutes').addEventListener('click', ()=>{const cb=document.getElementById('generate_minutes');cb.checked=!cb.checked;toggleLabel(document.getElementById('toggleMinutes'),'generate_minutes'); updateSelectedOptions();});
+      document.getElementById('toggleKeyPoints').addEventListener('click', ()=>{const cb=document.getElementById('generate_keypoints');cb.checked=!cb.checked;toggleLabel(document.getElementById('toggleKeyPoints'),'generate_keypoints'); updateSelectedOptions();});
+      document.getElementById('toggleTerms').addEventListener('click', ()=>{const cb=document.getElementById('generate_terms');cb.checked=!cb.checked;toggleLabel(document.getElementById('toggleTerms'),'generate_terms'); updateSelectedOptions();});
 
-        if (!fileInput.files.length) return alert('请选择音频文件');
+      function updateSelectedOptions(){
+        const opts = [];
+        if(document.getElementById('generate_summary').checked) opts.push('摘要');
+        if(document.getElementById('generate_minutes').checked) opts.push('完整转录');
+        if(document.getElementById('generate_keypoints').checked) opts.push('要点');
+        if(document.getElementById('generate_terms').checked) opts.push('术语');
+        document.getElementById('selectedOptions').textContent = '已选：' + (opts.length? opts.join('、') : '无');
+      }
+
+      // initialize selected options on load
+      updateSelectedOptions();
+
+      // Drag & drop
+      ['dragenter','dragover'].forEach(evt => dropArea.addEventListener(evt, (e)=>{e.preventDefault();dropArea.classList.add('dragover')}));
+      ['dragleave','drop'].forEach(evt => dropArea.addEventListener(evt, (e)=>{e.preventDefault();dropArea.classList.remove('dragover')}));
+      dropArea.addEventListener('drop', (e)=>{ if(e.dataTransfer.files && e.dataTransfer.files.length){ fileInput.files = e.dataTransfer.files; onFileSelected(); }});
+      dropArea.addEventListener('click', ()=>fileInput.click());
+      fileInput.addEventListener('change', onFileSelected);
+
+      function onFileSelected(){
+        const f = fileInput.files[0];
+        if(!f) return; promptText.textContent = `已选择：${f.name} · ${(f.size/1024/1024).toFixed(2)} MB`;
+      }
+
+      function setStatus(text, busy=false){
+        statusRow.innerHTML = busy? `<div class=spinner></div><div>${text}</div>`: `<div class=muted>${text}</div>`;
+      }
+
+      function makeDownloadButton(filename, text, label){
+        // create a nicely styled download button that serves markdown
+        const a = document.createElement('a');
+        const md = text;
+        a.href = URL.createObjectURL(new Blob([md], {type:'text/markdown;charset=utf-8'}));
+        a.download = filename;
+        a.className = 'chip';
+        // add a small file icon
+        const icon = document.createElement('span');
+        icon.style.marginRight = '8px';
+        icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#334155" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        a.appendChild(icon);
+        const txt = document.createElement('span');
+        txt.textContent = label || ('下载 ' + filename);
+        a.appendChild(txt);
+        return a;
+      }
+
+      async function submit(){
+        if(!fileInput.files.length) return alert('请选择音频文件');
+        submitBtn.disabled = true; setStatus('上传并处理中...', true);
+  summaryEl.textContent = ''; transcriptEl.textContent = ''; downloadPanel.innerHTML = '';
+        // show selected options
+        const opts = [];
+        if(document.getElementById('generate_summary').checked) opts.push('摘要');
+        if(document.getElementById('generate_minutes').checked) opts.push('完整转录');
+        if(document.getElementById('generate_keypoints').checked) opts.push('要点');
+        if(document.getElementById('generate_terms').checked) opts.push('术语');
+        document.getElementById('selectedOptions').textContent = '已选：' + (opts.length? opts.join('、') : '无');
+
         const fd = new FormData();
         fd.append('file', fileInput.files[0]);
-        fd.append('attendees', attendees);
-        fd.append('meeting_topic', meeting_topic);
-        fd.append('generate_minutes', generate_minutes);
-        fd.append('generate_summary', generate_summary);
-
-        status.textContent = '上传中...';
-        summaryEl.textContent = '';
-        transcriptEl.textContent = '';
-
-        try {
-          const resp = await fetch('/api/process', { method: 'POST', body: fd });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({}));
-            status.textContent = '处理失败: ' + (err.error || resp.statusText);
-            return;
-          }
-          const data = await resp.json();
-          status.textContent = '处理完成';
-          summaryEl.textContent = data.summary || data.summary_text || '';
-          transcriptEl.textContent = data.transcript || data.transcription || '';
-        } catch (e) {
-          status.textContent = '请求出错: ' + e.message;
+        fd.append('attendees', document.getElementById('attendees').value || '');
+        fd.append('meeting_topic', document.getElementById('meeting_topic').value || '');
+        fd.append('generate_minutes', document.getElementById('generate_minutes').checked);
+        fd.append('generate_summary', document.getElementById('generate_summary').checked);
+  fd.append('generate_keypoints', document.getElementById('generate_keypoints').checked);
+  fd.append('generate_terms', document.getElementById('generate_terms').checked);
+        // set per-option statuses: pending for selected
+        const optionMap = {
+          summary: 'status_summary',
+          full_transcript: 'status_full_transcript',
+          key_points: 'status_key_points',
+          terms: 'status_terms'
+        };
+        function setOptionStatusId(id, state, text){
+          const el = document.getElementById(id);
+          if(!el) return;
+          if(state === 'pending') el.innerHTML = '<span class="spinner" style="width:12px;height:12px;border-width:2px"></span> 处理中';
+          else if(state === 'done') el.innerHTML = '完成 ✔';
+          else if(state === 'error') el.innerHTML = '<span style="color:#ef4444">失败</span>';
+          else el.innerHTML = '';
         }
-      });
+
+        // clear previous downloads and set panel empty
+        downloadPanel.innerHTML = '';
+        // pending for each selected option
+        if(document.getElementById('generate_summary').checked) setOptionStatusId(optionMap.summary, 'pending');
+        if(document.getElementById('generate_minutes').checked) setOptionStatusId(optionMap.full_transcript, 'pending');
+        if(document.getElementById('generate_keypoints').checked) setOptionStatusId(optionMap.key_points, 'pending');
+        if(document.getElementById('generate_terms').checked) setOptionStatusId(optionMap.terms, 'pending');
+
+        try{
+          const resp = await fetch('/api/process', {method:'POST', body:fd});
+          if(!resp.ok){ const err = await resp.json().catch(()=>({})); setStatus('处理失败: '+(err.error||resp.statusText)); submitBtn.disabled=false; return; }
+          const data = await resp.json();
+
+          setStatus('处理完成');
+          summaryEl.textContent = data.summary || '（无摘要）';
+
+          // transcript vs full_transcript: prefer full_transcript for download/display when requested
+          if(document.getElementById('generate_minutes').checked){
+            // user requested full transcript (generate_minutes toggle)
+            transcriptEl.textContent = data.full_transcript || data.transcript || '（无转录）';
+          } else {
+            transcriptEl.textContent = data.transcript || '（无转录）';
+          }
+
+          // downloads: prefer full_transcript over transcript (only one transcript download)
+          if(data.summary){
+            const md = '# 摘要\n\n' + data.summary.trim();
+            downloadPanel.appendChild(makeDownloadButton('summary.md', md, '摘要.md'));
+            setOptionStatusId(optionMap.summary, 'done');
+          } else {
+            if(document.getElementById('generate_summary').checked) setOptionStatusId(optionMap.summary, 'error');
+          }
+
+          // transcript download preference
+          if(data.full_transcript){
+            const mdFull = '# 完整转录\n\n' + data.full_transcript.trim();
+            downloadPanel.appendChild(makeDownloadButton('full_transcript.md', mdFull, '完整转录.md'));
+            setOptionStatusId(optionMap.full_transcript, 'done');
+          } else if(data.transcript){
+            const md = '# 转录\n\n' + data.transcript.trim();
+            downloadPanel.appendChild(makeDownloadButton('transcript.md', md, '转录.md'));
+            // if user requested full_transcript but it's absent, still show transcript and mark error for full_transcript
+            if(document.getElementById('generate_minutes').checked){
+              setOptionStatusId(optionMap.full_transcript, data.full_transcript? 'done':'error');
+            } else {
+              setOptionStatusId(optionMap.full_transcript, 'done');
+            }
+          } else {
+            if(document.getElementById('generate_minutes').checked) setOptionStatusId(optionMap.full_transcript, 'error');
+          }
+
+          // key points
+          if(data.key_points){
+            const kpText = Array.isArray(data.key_points) ? data.key_points.map(k=>`- ${k}`).join('\n') : String(data.key_points);
+            document.getElementById('key_points').textContent = kpText || '（无要点）';
+            const md = '# 关键要点\n\n' + kpText;
+            downloadPanel.appendChild(makeDownloadButton('key_points.md', md, '关键要点.md'));
+            setOptionStatusId(optionMap.key_points, 'done');
+          } else if(data.key_points_error){
+            document.getElementById('key_points').textContent = '要点提取失败: ' + data.key_points_error;
+            setOptionStatusId(optionMap.key_points, 'error');
+          } else {
+            if(document.getElementById('generate_keypoints').checked) setOptionStatusId(optionMap.key_points, 'error');
+          }
+
+          // technical terms
+          if(data.technical_terms){
+            const termsText = Array.isArray(data.technical_terms) ? data.technical_terms.map(t=>`- ${t}`).join('\n') : String(data.technical_terms);
+            document.getElementById('technical_terms').textContent = termsText || '（无术语）';
+            const md = '# 专业术语解释\n\n' + termsText;
+            downloadPanel.appendChild(makeDownloadButton('technical_terms.md', md, '专业术语.md'));
+            setOptionStatusId(optionMap.terms, 'done');
+          } else if(data.technical_terms_error){
+            document.getElementById('technical_terms').textContent = '术语提取失败: ' + data.technical_terms_error;
+            setOptionStatusId(optionMap.terms, 'error');
+          } else {
+            if(document.getElementById('generate_terms').checked) setOptionStatusId(optionMap.terms, 'error');
+          }
+        }catch(err){ setStatus('请求出错: '+err.message); }
+        submitBtn.disabled=false;
+      }
+
+      submitBtn.addEventListener('click', submit);
+
     </script>
   </body>
 </html>
