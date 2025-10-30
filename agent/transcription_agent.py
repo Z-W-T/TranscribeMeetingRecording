@@ -119,7 +119,7 @@ class TranscriptionAgent:
             content = "\n".join([f"- {point}" for point in results["key_points"]])
             key_points_file.write_text(content, encoding="utf-8")
 
-        # 保存技术术语解释
+        # 保存专有名词解释
         if "technical_terms" in results:
             terms_file = output_dir / "technical_terms.md"
             if not terms_file.exists():
