@@ -95,3 +95,14 @@ prompts:
         请列出较难理解的专有名词及其简要解释,必要时提供示例便于理解。格式为“-key:value”：
     parameters:
       - transcript
+
+  transcript_extraction:
+    system: "你是一名语言处理专家，将会议录音转录转换为对话脚本"
+    template: |
+        请从以下会议录音转录中提取对话脚本，并以对话格式返回。请注意上下文逻辑关系以确定发言人。
+
+        会议转录json格式内容：
+        {transcript}
+
+    parameters:
+      - transcript
