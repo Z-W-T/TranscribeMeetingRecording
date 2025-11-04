@@ -8,7 +8,6 @@ from pathlib import Path
 from agent.speech_recognition import SpeechRecognitionEngine
 from agent.meeting_minutes import MeetingMinutesGenerator
 
-
 class TranscriptionAgent:
     """智能转录代理"""
     
@@ -24,12 +23,13 @@ class TranscriptionAgent:
             agent_setting: 智能体配置字典(包含模型名称，输入音频路径，api_key,输出路径)
             minutes_generator_setting: 会议纪要生成器配置字典(包含api_key,模型名称)
         """
+        self.agent_setting = agent_setting
         self.speech_engine =SpeechRecognitionEngine(api_key=agent_setting.get("api_key"),
                                                     model=agent_setting.get("whisper_model"))
         self.minutes_generator = MeetingMinutesGenerator(
             api_settings=minutes_generator_setting
         )
-    
+
     def transcribe_audio(self, audio_input, language: str = "zh") -> str:
         """
         将音频文件转换为文字
@@ -41,7 +41,13 @@ class TranscriptionAgent:
         Returns:
             str: 转录文字
         """
-        return self.speech_engine.transcribe(audio_input)
+        transcript = self.speech_engine.transcribe(audio_input)
+        # with open('data/ifasr_output.md', 'r', encoding='utf-8') as f:
+        #     transcript = f.read()
+        # if self.agent_setting.get("asr_provider") == "ifasr":
+        #     # IFASR返回的文本可能需要额外处理
+        transcript = self.minutes_generator.generate_transcript(transcript)
+        return transcript
     
     def generate_summary(
         self,
