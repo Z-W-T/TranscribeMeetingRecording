@@ -7,3 +7,6 @@ example_agent_usage.py
 
 # 忽略 __pycache__ 目录
 __pycache__/
+
+# 忽略输出
+data/
