@@ -34,6 +34,22 @@ class MeetingMinutesGenerator:
             # Lazy: set client to None and let calls fail clearly if no API key provided
             self.client = None
     
+    def generate_transcript(self, tanscript_str) -> str:
+        """
+        将拼接文本转为正常脚本
+        
+        Args:
+            tanscript_str: 拼接字符串
+            
+        Returns:
+            str: 对话脚本
+        """
+        prompt = self._build_transcript_prompt(tanscript_str)
+        if not self.client:
+            raise RuntimeError("Deepseek API client not configured (missing api_key in api_settings)")
+        transcript = self.client.call_api(prompt)
+        return transcript 
+
     def generate_summary(self, transcript: str, additional_context: Optional[str] = None) -> str:
         """
         生成会议摘要
@@ -81,6 +97,12 @@ class MeetingMinutesGenerator:
             "transcript": transcript
         }
     
+    def _build_transcript_prompt(self, tanscript_str) -> str:
+        """构建对话脚本提取prompt"""
+        prompt_manager = PromptManager(config_path="config/prompts.yaml")
+        prompt = prompt_manager.get_prompt(prompt_key='transcript_extraction',transcript = tanscript_str)
+        return prompt
+
     def _build_summary_prompt(self, transcript: str, context: Optional[str] = None) -> str:
         """构建摘要生成prompt"""
         prompt_manager = PromptManager(config_path="config/prompts.yaml")
