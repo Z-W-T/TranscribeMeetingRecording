@@ -18,13 +18,20 @@ class Config:
         "audio_input": os.getenv("AUDIO_INPUT", "data/dialogue_recording.mp3"),
         "api_key": os.getenv("OPENAI_API_KEY")
     }
+    # ASR provider settings: allows switching between 'whisper' and 'ifasr'
+    AGENT_CONFIG.update({
+        "asr_provider": os.getenv("ASR_PROVIDER", "whisper"),
+        "ifasr_appid": os.getenv("IFASR_APPID"),
+        "ifasr_access_key_id": os.getenv("IFASR_ACCESS_KEY_ID"),
+        "ifasr_access_key_secret": os.getenv("IFASR_ACCESS_KEY_SECRET"),
+    })
 
     # 功能配置
     USAGE_CONFIG = {
         "enable_meeting_transcription": True,
-        "enable_meeting_transcription": True,
-        "enable_key_points_extraction": True,
-        "enable_technical_terms_explanation": True
+        "enable_meeting_summary_generation": False,
+        "enable_key_points_extraction": False,
+        "enable_technical_terms_explanation": False
     }
     
     # @property
