@@ -49,8 +49,18 @@ if os.path.isdir(FRONTEND_DIR):
         fav = os.path.join(FRONTEND_DIR, "favicon.ico")
         if os.path.exists(fav):
             return FileResponse(fav)
-        # No favicon provided — return empty 204 so browsers stop requesting repeatedly
-        return Response(status_code=204)
+        # No favicon file present — return a tiny inline SVG so the browser
+        # receives a valid icon instead of a 204. This is a convenient default
+        # for development; for production you may want to place a real
+        # `favicon.ico`/`favicon.png` in the `frontend/` directory.
+        svg = (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">'
+            '<rect width="16" height="16" fill="#5b8def"/>'
+            '<text x="8" y="10" font-size="9" text-anchor="middle" fill="#fff" font-family="Arial, Helvetica, sans-serif">M</text>'
+            '</svg>'
+        )
+        return Response(content=svg, media_type="image/svg+xml")
 
 
 @app.post("/api/process")
