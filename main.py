@@ -90,18 +90,19 @@ if __name__ == "__main__":
         agent_setting = config.AGENT_CONFIG,
         minutes_generator_setting= config.DEEPSEEK_SETTINGS
     )
+
     # 记录结果字典
     results = {}
-    # if config.USAGE_CONFIG.get("enable_meeting_transcription"):
-    #     results['transcript'] = example_meeting_summary_generation(agent, config)
+    if config.USAGE_CONFIG.get("enable_meeting_transcription"):
+        results['transcript'] = example_meeting_transcription(agent, config)
 
-    # if config.USAGE_CONFIG.get("enable_meeting_transcription"):
+    # if config.USAGE_CONFIG.get("enable_meeting_summary_generation"):
     #     results['summary'] = example_meeting_summary_generation(agent, config)
     
     # if config.USAGE_CONFIG.get("enable_key_points_extraction"):
     #     results['key_point'] = example_key_points_extraction(agent, config)
 
-    if config.USAGE_CONFIG.get("enable_technical_terms_explanation"):
-        results['technical_terms'] = example_technical_terms_explanation(agent, config)
+    # if config.USAGE_CONFIG.get("enable_technical_terms_explanation"):
+    #     results['technical_terms'] = example_technical_terms_explanation(agent, config)
 
-    agent.save_results(results, output_path=config.AGENT_CONFIG['output_dir'])
+    # agent.save_results(results, output_path=config.AGENT_CONFIG['output_dir'])
