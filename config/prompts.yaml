@@ -51,7 +51,7 @@ prompts:
   meeting_minutes:
     system: "你是一名专业的会议记录员"
     template: |
-      请根据以下会议录音转录内容生成详细的会议纪要。
+      请根据以下会议录音转录内容生成详细的会议纪要,请按照word格式进行生成，要求简洁美观。
       
       会议主题: {meeting_topic}
       参会人员: {attendees}
