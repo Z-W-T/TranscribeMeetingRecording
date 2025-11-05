@@ -3,7 +3,7 @@
 整合语音识别和会议纪要生成功能
 """
 import os
-from typing import Optional, Dict, BinaryIO, List
+from typing import Optional, Dict, BinaryIO, List, Callable
 from pathlib import Path
 from agent.speech_recognition import SpeechRecognitionEngine
 from agent.meeting_minutes import MeetingMinutesGenerator
@@ -29,8 +29,9 @@ class TranscriptionAgent:
         self.minutes_generator = MeetingMinutesGenerator(
             api_settings=minutes_generator_setting
         )
+        self.transcript: Optional[str] = None  # 缓存转录结果
 
-    def transcribe_audio(self, audio_input, language: str = "zh") -> str:
+    def transcribe_audio(self, audio_input, progress_callback: Optional[Callable[[int], None]] = None, language: str = "zh") -> str:
         """
         将音频文件转换为文字
         
@@ -41,13 +42,16 @@ class TranscriptionAgent:
         Returns:
             str: 转录文字
         """
-        transcript = self.speech_engine.transcribe(audio_input)
+        # 如果已经转录过，直接返回缓存结果
+        if self.transcript:
+            return self.transcript
+        transcript = self.speech_engine.transcribe(audio_input, progress_callback=progress_callback)
         # with open('data/ifasr_output.md', 'r', encoding='utf-8') as f:
         #     transcript = f.read()
-        # if self.agent_setting.get("asr_provider") == "ifasr":
-        #     # IFASR返回的文本可能需要额外处理
+        # 生成对话格式
         transcript = self.minutes_generator.generate_transcript(transcript)
-        return transcript
+        self.transcript = transcript
+        return self.transcript
     
     def generate_summary(
         self,

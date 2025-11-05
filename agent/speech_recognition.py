@@ -3,6 +3,7 @@
 支持多种语音识别引擎：Whisper API、本地Whisper等
 """
 import os
+from typing import Optional, Dict, BinaryIO, List, Callable
 from utils.api_client import WhisperAPI
 
 class SpeechRecognitionEngine:
@@ -25,7 +26,7 @@ class SpeechRecognitionEngine:
         self.ifasr_access_key_id = os.getenv('IFASR_ACCESS_KEY_ID')
         self.ifasr_access_key_secret = os.getenv('IFASR_ACCESS_KEY_SECRET')
         
-    def transcribe(self, audio_input_path) -> str:
+    def transcribe(self, audio_input_path, progress_callback: Optional[Callable[[int], None]] = None) -> str:
         """
         将语音转换为文字
         
@@ -46,7 +47,7 @@ class SpeechRecognitionEngine:
                 raise RuntimeError('IFASR provider selected but IFASR_APPID/IFASR_ACCESS_KEY_ID/IFASR_ACCESS_KEY_SECRET are not set in environment')
 
             ifasr = IfasrAPI(appid=self.ifasr_appid, access_key_id=self.ifasr_access_key_id, access_key_secret=self.ifasr_access_key_secret)
-            transcript = ifasr.transcribe_audio(audio_input_path)
+            transcript = ifasr.transcribe_audio(audio_input_path, progress_callback=progress_callback)
         else:
             whisper_api = WhisperAPI(api_key=self.api_key, model=self.model)
             transcript = whisper_api.transcribe_audio(audio_input_path)
