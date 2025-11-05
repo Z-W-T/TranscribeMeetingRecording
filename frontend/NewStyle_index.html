@@ -1,0 +1,1680 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>会议转录 · 前端</title>
+    <style>
+      :root {
+        --primary: #FF4B4B;
+        --primary-light: #FF9A9A;
+        --primary-dark: #D32F2F;
+        --secondary: #1E88E5;
+        --bg: #f8f9fa;
+        --card: #ffffff;
+        --text: #24292e;
+        --text-light: #6a737d;
+        --border: #e1e4e8;
+        --success: #28a745;
+        --warning: #ffd33d;
+        --error: #d73a49;
+        --processing: #0366d6;
+        --sidebar-width: 280px;
+      }
+      
+      * { 
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        display: flex;
+        min-height: 100vh;
+      }
+      
+      /* 侧边栏样式 */
+      .sidebar {
+        width: var(--sidebar-width);
+        background: var(--card);
+        border-right: 1px solid var(--border);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+      
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+      
+      .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+      }
+      
+      .logo-text {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .sidebar-section {
+        margin-bottom: 2rem;
+      }
+      
+      .sidebar-title {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+      }
+      
+      .task-status {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: #fafbfc;
+        border-radius: 6px;
+        border-left: 4px solid var(--border);
+        transition: all 0.3s ease;
+      }
+      
+      .status-item.pending {
+        border-left-color: var(--processing);
+        background: #f1f8ff;
+      }
+      
+      .status-item.active {
+        border-left-color: var(--processing);
+        background: #f1f8ff;
+      }
+      
+      .status-item.done {
+        border-left-color: var(--success);
+        background: #f0fff4;
+      }
+      
+      .status-item.error {
+        border-left-color: var(--error);
+        background: #ffeef0;
+      }
+      
+      .status-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--border);
+        color: white;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+      }
+      
+      .status-item.pending .status-icon {
+        background: var(--processing);
+      }
+      
+      .status-item.active .status-icon {
+        background: var(--processing);
+      }
+      
+      .status-item.done .status-icon {
+        background: var(--success);
+      }
+      
+      .status-item.error .status-icon {
+        background: var(--error);
+      }
+      
+      .status-text {
+        flex: 1;
+      }
+      
+      .status-label {
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      
+      .status-desc {
+        font-size: 0.75rem;
+        color: var(--text-light);
+      }
+      
+      .progress-container {
+        width: 100%;
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        margin-top: 0.5rem;
+        overflow: hidden;
+      }
+      
+      .progress-bar {
+        height: 100%;
+        background: var(--primary);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+        width: 0%;
+      }
+      
+      /* 主内容区样式 */
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      
+      .tabs {
+        display: flex;
+        background: var(--card);
+        border-bottom: 1px solid var(--border);
+        padding: 0 1.5rem;
+      }
+      
+      .tab {
+        padding: 1rem 1.5rem;
+        background: none;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: var(--text-light);
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+      }
+      
+      .tab:hover {
+        color: var(--text);
+      }
+      
+      .tab.active {
+        color: var(--primary);
+        font-weight: 600;
+      }
+      
+      .tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+      }
+      
+      .tab-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+      }
+      
+      .tab-pane {
+        display: none;
+        max-width: 900px;
+      }
+      
+      .tab-pane.active {
+        display: block;
+      }
+      
+      /* 卡片样式 */
+      .card {
+        background: var(--card);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(27, 31, 35, 0.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+      }
+      
+      .card-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+      }
+      
+      .card-body {
+        padding: 1.5rem;
+      }
+      
+      /* 文件上传区域 */
+      .drop-area {
+        border: 2px dashed var(--border);
+        border-radius: 6px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafbfc;
+      }
+      
+      .drop-area:hover, .drop-area.dragover {
+        border-color: var(--primary);
+        background: #fff5f5;
+      }
+      
+      .drop-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--text-light);
+      }
+      
+      .file-info {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f6f8fa;
+        border-radius: 6px;
+        text-align: left;
+      }
+      
+      .file-name {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+      }
+      
+      .file-size {
+        font-size: 0.85rem;
+        color: var(--text-light);
+      }
+      
+      /* 表单元素 */
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+      
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+      }
+      
+      .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+      }
+      
+      .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(255, 75, 75, 0.1);
+      }
+      
+      /* 选项切换 */
+      .options-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      
+      .option-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .option-toggle:hover {
+        border-color: var(--primary-light);
+      }
+      
+      .option-toggle.active {
+        border-color: var(--primary);
+        background: #fff5f5;
+      }
+      
+      .option-toggle.required {
+        border-color: var(--primary);
+        background: #fff5f5;
+        cursor: not-allowed;
+      }
+      
+      .option-toggle.required:hover {
+        border-color: var(--primary);
+      }
+      
+      .option-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        background: var(--border);
+        color: var(--text);
+      }
+      
+      .option-toggle.active .option-icon {
+        background: var(--primary);
+        color: white;
+      }
+      
+      .option-toggle.required .option-icon {
+        background: var(--primary);
+        color: white;
+      }
+      
+      .option-text {
+        flex: 1;
+      }
+      
+      .option-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+      
+      .option-desc {
+        font-size: 0.8rem;
+        color: var(--text-light);
+      }
+      
+      /* 按钮 */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      
+      .btn:hover:not(:disabled) {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+      }
+      
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+      
+      .btn-block {
+        display: block;
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+      }
+      
+      /* 处理过程样式 */
+      .process-log {
+        background: #f6f8fa;
+        border-radius: 6px;
+        padding: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.85rem;
+      }
+      
+      .log-entry {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 3px;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+      
+      .log-time {
+        color: var(--text-light);
+        font-size: 0.75rem;
+        min-width: 80px;
+      }
+      
+      .log-message {
+        flex: 1;
+      }
+      
+      .log-success {
+        background: #dcffe4;
+        border-left: 3px solid var(--success);
+      }
+      
+      .log-error {
+        background: #ffdce0;
+        border-left: 3px solid var(--error);
+      }
+      
+      .log-info {
+        background: #dbedff;
+        border-left: 3px solid var(--processing);
+      }
+      
+      .log-warning {
+        background: #fff5b1;
+        border-left: 3px solid var(--warning);
+      }
+      
+      /* 输出样式 - Typora风格 */
+      .output-section {
+        margin-bottom: 2rem;
+      }
+      
+      .output-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      
+      .output-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+      }
+      
+      .output-content {
+        background: var(--card);
+        border-radius: 6px;
+        padding: 2rem;
+        border: 1px solid var(--border);
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        line-height: 1.7;
+      }
+      
+      /* Typora样式渲染 */
+      .typora-content {
+        font-size: 16px;
+        color: #24292e;
+      }
+      
+      .typora-content h1,
+      .typora-content h2,
+      .typora-content h3,
+      .typora-content h4,
+      .typora-content h5,
+      .typora-content h6 {
+        margin-top: 24px;
+        margin-bottom: 16px;
+        font-weight: 600;
+        line-height: 1.25;
+      }
+      
+      .typora-content h1 {
+        font-size: 2em;
+        padding-bottom: 0.3em;
+        border-bottom: 1px solid #eaecef;
+      }
+      
+      .typora-content h2 {
+        font-size: 1.5em;
+        padding-bottom: 0.3em;
+        border-bottom: 1px solid #eaecef;
+      }
+      
+      .typora-content h3 {
+        font-size: 1.25em;
+      }
+      
+      .typora-content h4 {
+        font-size: 1em;
+      }
+      
+      .typora-content p {
+        margin-top: 0;
+        margin-bottom: 16px;
+      }
+      
+      .typora-content ul,
+      .typora-content ol {
+        padding-left: 2em;
+        margin-top: 0;
+        margin-bottom: 16px;
+      }
+      
+      .typora-content li {
+        margin-bottom: 0.25em;
+      }
+      
+      .typora-content ul ul,
+      .typora-content ul ol,
+      .typora-content ol ol,
+      .typora-content ol ul {
+        margin-top: 0;
+        margin-bottom: 0;
+      }
+      
+      .typora-content blockquote {
+        padding: 0 1em;
+        color: #6a737d;
+        border-left: 0.25em solid #dfe2e5;
+        margin: 0 0 16px 0;
+      }
+      
+      .typora-content table {
+        border-spacing: 0;
+        border-collapse: collapse;
+        margin-bottom: 16px;
+        width: 100%;
+      }
+      
+      .typora-content table th,
+      .typora-content table td {
+        padding: 6px 13px;
+        border: 1px solid #dfe2e5;
+      }
+      
+      .typora-content table th {
+        font-weight: 600;
+        background-color: #f6f8fa;
+      }
+      
+      .typora-content table tr:nth-child(2n) {
+        background-color: #f6f8fa;
+      }
+      
+      .typora-content code {
+        padding: 0.2em 0.4em;
+        margin: 0;
+        font-size: 85%;
+        background-color: rgba(27, 31, 35, 0.05);
+        border-radius: 3px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      }
+      
+      .typora-content pre {
+        padding: 16px;
+        overflow: auto;
+        font-size: 85%;
+        line-height: 1.45;
+        background-color: #f6f8fa;
+        border-radius: 3px;
+        margin-bottom: 16px;
+      }
+      
+      .typora-content pre code {
+        padding: 0;
+        background: transparent;
+        border-radius: 0;
+      }
+      
+      .typora-content hr {
+        height: 0.25em;
+        padding: 0;
+        margin: 24px 0;
+        background-color: #e1e4e8;
+        border: 0;
+      }
+      
+      .typora-content strong {
+        font-weight: 600;
+      }
+      
+      .typora-content em {
+        font-style: italic;
+      }
+      
+      .download-buttons {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+      }
+      
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--text);
+        font-size: 0.85rem;
+        transition: all 0.2s;
+      }
+      
+      .download-btn:hover {
+        background: #f6f8fa;
+        border-color: var(--primary-light);
+      }
+      
+      /* 隐藏元素 */
+      .hidden {
+        display: none;
+      }
+      
+      /* 响应式设计 */
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column;
+        }
+        
+        .sidebar {
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+        
+        .tabs {
+          overflow-x: auto;
+        }
+        
+        .options-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">M</div>
+        <div class="logo-text">会议转录</div>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">处理状态</div>
+        <div class="task-status">
+          <div class="status-item active" id="status-upload">
+            <div class="status-icon">1</div>
+            <div class="status-text">
+              <div class="status-label">文件上传</div>
+              <div class="status-desc">等待上传音频文件</div>
+            </div>
+          </div>
+          
+          <div class="status-item" id="status-transcribe">
+            <div class="status-icon">2</div>
+            <div class="status-text">
+              <div class="status-label">语音转录</div>
+              <div class="status-desc">将音频转换为文本</div>
+            </div>
+          </div>
+          
+          <div class="status-item" id="status-summary">
+            <div class="status-icon">3</div>
+            <div class="status-text">
+              <div class="status-label">生成摘要</div>
+              <div class="status-desc">提取会议核心内容</div>
+            </div>
+          </div>
+          
+          <div class="status-item" id="status-keypoints">
+            <div class="status-icon">4</div>
+            <div class="status-text">
+              <div class="status-label">提取要点</div>
+              <div class="status-desc">识别关键讨论点</div>
+            </div>
+          </div>
+          
+          <div class="status-item" id="status-terms">
+            <div class="status-icon">5</div>
+            <div class="status-text">
+              <div class="status-label">术语解释</div>
+              <div class="status-desc">解析专业术语</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">处理进度</div>
+        <div class="progress-container">
+          <div class="progress-bar" id="sidebar-progress-bar"></div>
+        </div>
+        <div class="status-desc" id="progress-text" style="margin-top: 0.5rem;">0%</div>
+      </div>
+      
+      <div class="sidebar-section">
+        <div class="sidebar-title">当前文件</div>
+        <div class="status-desc" id="current-file">未选择文件</div>
+      </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 选项卡导航 -->
+      <div class="tabs">
+        <button class="tab active" data-tab="input">输入</button>
+        <button class="tab" data-tab="process">处理过程</button>
+        <button class="tab" data-tab="output">输出</button>
+      </div>
+      
+      <!-- 选项卡内容 -->
+      <div class="tab-content">
+        <!-- 输入选项卡 -->
+        <div id="input-tab" class="tab-pane active">
+          <div class="card">
+            <div class="card-header">上传音频文件</div>
+            <div class="card-body">
+              <div id="drop-area" class="drop-area">
+                <div class="drop-icon">🎤</div>
+                <h3>拖放或点击上传音频文件</h3>
+                <p>支持 MP3、WAV 等常见音频格式</p>
+                <input type="file" id="file-input" class="hidden" accept="audio/*" />
+                <div id="file-info" class="file-info hidden">
+                  <div class="file-name" id="file-name"></div>
+                  <div class="file-size" id="file-size"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">会议信息（可选）</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label" for="attendees">参会人员</label>
+                <input type="text" id="attendees" class="form-control" placeholder="输入参会人员，用逗号分隔" />
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label" for="meeting-topic">会议主题</label>
+                <input type="text" id="meeting-topic" class="form-control" placeholder="输入会议主题或议题" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">处理选项</div>
+            <div class="card-body">
+              <div class="options-grid">
+                <!-- 完整转录 - 必需功能，不可取消 -->
+                <div class="option-toggle required" id="toggle-minutes">
+                  <div class="option-icon">📄</div>
+                  <div class="option-text">
+                    <div class="option-label">完整转录</div>
+                    <div class="option-desc">生成完整会议记录（必需）</div>
+                  </div>
+                </div>
+                
+                <div class="option-toggle active" id="toggle-summary">
+                  <div class="option-icon">📝</div>
+                  <div class="option-text">
+                    <div class="option-label">生成摘要</div>
+                    <div class="option-desc">会议核心内容总结</div>
+                  </div>
+                </div>
+                
+                <div class="option-toggle" id="toggle-keypoints">
+                  <div class="option-icon">🔍</div>
+                  <div class="option-text">
+                    <div class="option-label">关键要点</div>
+                    <div class="option-desc">提取重要讨论点</div>
+                  </div>
+                </div>
+                
+                <div class="option-toggle" id="toggle-terms">
+                  <div class="option-icon">💡</div>
+                  <div class="option-text">
+                    <div class="option-label">术语解释</div>
+                    <div class="option-desc">解析专业术语</div>
+                  </div>
+                </div>
+              </div>
+              
+              <button id="submit-btn" class="btn btn-block">开始处理</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 处理过程选项卡 -->
+        <div id="process-tab" class="tab-pane">
+          <div class="card">
+            <div class="card-header">处理日志</div>
+            <div class="card-body">
+              <div id="process-log" class="process-log">
+                <div class="log-entry log-info">
+                  <div class="log-time" id="current-time"></div>
+                  <div class="log-message">等待开始处理...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 输出选项卡 -->
+        <div id="output-tab" class="tab-pane">
+          <div class="output-section">
+            <div class="output-header">
+              <div class="output-title">完整转录</div>
+              <div id="transcript-status" class="status-desc">等待处理</div>
+            </div>
+            <div id="transcript-content" class="output-content typora-content">（等待处理结果）</div>
+            <div id="transcript-downloads" class="download-buttons"></div>
+          </div>
+          
+          <div class="output-section">
+            <div class="output-header">
+              <div class="output-title">会议摘要</div>
+              <div id="summary-status" class="status-desc">等待处理</div>
+            </div>
+            <div id="summary-content" class="output-content typora-content">（等待处理结果）</div>
+            <div id="summary-downloads" class="download-buttons"></div>
+          </div>
+          
+          <div class="output-section">
+            <div class="output-header">
+              <div class="output-title">关键要点</div>
+              <div id="keypoints-status" class="status-desc">未选择此选项</div>
+            </div>
+            <div id="keypoints-content" class="output-content typora-content">（如选择"关键要点"选项，此处将显示提取结果）</div>
+            <div id="keypoints-downloads" class="download-buttons"></div>
+          </div>
+          
+          <div class="output-section">
+            <div class="output-header">
+              <div class="output-title">专业术语</div>
+              <div id="terms-status" class="status-desc">未选择此选项</div>
+            </div>
+            <div id="terms-content" class="output-content typora-content">（如选择"术语解释"选项，此处将显示解析结果）</div>
+            <div id="terms-downloads" class="download-buttons"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Typora风格的Markdown渲染器
+class TyporaRenderer {
+    static render(text) {
+        if (!text) return '';
+        
+        let html = this.escapeHtml(text);
+        
+        // 处理顺序很重要
+        html = this.processCodeBlocks(html);
+        html = this.processBlockElements(html);
+        html = this.processInlineElements(html);
+        html = this.cleanupAndFormat(html);
+        
+        return html;
+    }
+    
+    static escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    static processCodeBlocks(text) {
+        let html = text.replace(/```([\s\S]*?)```/g, (match, code) => {
+            return `<pre><code>${this.escapeHtml(code.trim())}</code></pre>`;
+        });
+        
+        html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
+        return html;
+    }
+    
+    static processBlockElements(text) {
+        const lines = text.split('\n');
+        let result = [];
+        let listStack = []; // 用于跟踪嵌套列表
+        let currentContext = { type: 'paragraph', content: [] };
+        
+        const closeContext = () => {
+            if (currentContext.content.length > 0) {
+                const content = currentContext.content.join('\n').trim();
+                if (content) {
+                    result.push(this.formatBlock(currentContext.type, content));
+                }
+                currentContext.content = [];
+            }
+        };
+        
+        const closeAllLists = () => {
+            while (listStack.length > 0) {
+                const list = listStack.pop();
+                result.push(`</${list.type}>`);
+            }
+        };
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmedLine = line.trim();
+            
+            if (!trimmedLine) {
+                closeContext();
+                closeAllLists();
+                result.push('');
+                continue;
+            }
+            
+            // 检查是否为列表项
+            const listItem = this.parseListItem(line);
+            if (listItem) {
+                closeContext(); // 关闭段落上下文
+                
+                const indentLevel = this.getIndentLevel(line);
+                const listType = listItem.type === 'ol' ? 'ol' : 'ul';
+                
+                // 处理列表嵌套
+                while (listStack.length > 0 && listStack[listStack.length - 1].indentLevel >= indentLevel) {
+                    const closedList = listStack.pop();
+                    result.push(`</${closedList.type}>`);
+                }
+                
+                // 开启新列表（如果需要）
+                if (listStack.length === 0 || listStack[listStack.length - 1].indentLevel < indentLevel) {
+                    result.push(`<${listType}>`);
+                    listStack.push({ type: listType, indentLevel: indentLevel });
+                }
+                
+                // 添加列表项
+                result.push(`<li>${listItem.content}</li>`);
+                continue;
+            }
+            
+            // 非列表项
+            closeAllLists();
+            
+            const blockType = this.detectBlockType(line);
+            if (blockType !== currentContext.type) {
+                closeContext();
+                currentContext.type = blockType;
+            }
+            
+            currentContext.content.push(line);
+        }
+        
+        closeContext();
+        closeAllLists();
+        return result.join('\n');
+    }
+    
+    static detectBlockType(line) {
+        const trimmedLine = line.trim();
+        
+        // 标题检测
+        const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.*)$/);
+        if (headingMatch) {
+            return `h${headingMatch[1].length}`;
+        }
+        
+        // 水平线
+        if (trimmedLine.match(/^[-*_]{3,}$/)) {
+            return 'hr';
+        }
+        
+        // 块引用
+        if (trimmedLine.startsWith('>')) {
+            return 'blockquote';
+        }
+        
+        // 表格检测
+        if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
+            return 'table';
+        }
+        
+        return 'paragraph';
+    }
+    
+    static getIndentLevel(line) {
+        const indentMatch = line.match(/^(\s*)/);
+        return indentMatch ? Math.floor(indentMatch[1].length / 4) : 0;
+    }
+    
+    static isListItem(line) {
+        return !!line.trim().match(/^([-*+]|\d+\.)\s+/);
+    }
+    
+    static parseListItem(line) {
+        const trimmedLine = line.trim();
+        const unorderedMatch = trimmedLine.match(/^([-*+])\s+(.*)$/);
+        if (unorderedMatch) {
+            return { type: 'ul', content: unorderedMatch[2] };
+        }
+        
+        const orderedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
+        if (orderedMatch) {
+            return { type: 'ol', content: orderedMatch[2] };
+        }
+        
+        return null;
+    }
+    
+    static formatBlock(type, content) {
+        switch (type) {
+            case 'paragraph':
+                return this.formatParagraph(content);
+                
+            case 'hr':
+                return '<hr>';
+                
+            case 'blockquote':
+                return this.formatBlockquote(content);
+                
+            case 'table':
+                return this.formatTable(content);
+                
+            default:
+                if (type.startsWith('h')) {
+                    const level = type.substring(1);
+                    const text = content.replace(/^#{1,6}\s+/, '');
+                    return `<h${level}>${text}</h${level}>`;
+                }
+                return this.formatParagraph(content);
+        }
+    }
+    
+    static formatParagraph(content) {
+        const lines = content.split('\n');
+        if (lines.length === 1) {
+            return `<p>${content}</p>`;
+        }
+        
+        const formattedContent = lines.map(line => {
+            if (line.trim() === '') return '';
+            return line;
+        }).filter(line => line !== '').join('<br>');
+        
+        return `<p>${formattedContent}</p>`;
+    }
+    
+    static formatBlockquote(content) {
+        const quoteContent = content.split('\n')
+            .map(line => line.replace(/^>\s*/, ''))
+            .join('\n')
+            .trim();
+        return `<blockquote>${quoteContent}</blockquote>`;
+    }
+    
+    static formatTable(content) {
+        const lines = content.split('\n').filter(line => line.trim());
+        if (lines.length === 0) return '';
+        
+        let tableHtml = '<table>';
+        let inHeader = true;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line.startsWith('|') || !line.endsWith('|')) continue;
+            
+            const cells = line.split('|')
+                .map(cell => cell.trim())
+                .filter(cell => cell);
+            
+            if (cells.every(cell => /^:?-+:?$/.test(cell))) {
+                inHeader = false;
+                continue;
+            }
+            
+            const tag = inHeader && i === 0 ? 'th' : 'td';
+            const rowHtml = cells.map(cell => `<${tag}>${cell}</${tag}>`).join('');
+            
+            if (inHeader && i === 0) {
+                tableHtml += `<thead><tr>${rowHtml}</tr></thead><tbody>`;
+            } else {
+                tableHtml += `<tr>${rowHtml}</tr>`;
+            }
+        }
+        
+        tableHtml += '</tbody></table>';
+        return tableHtml;
+    }
+    
+    static processInlineElements(text) {
+        return text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/__(.*?)__/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    }
+    
+    static cleanupAndFormat(text) {
+        let html = text;
+        
+        // 清理空段落
+        html = html.replace(/<p><\/p>/g, '');
+        
+        // 确保合理的间距
+        html = html.replace(/(<\/?(h[1-6]|p|ul|ol|blockquote|table)[^>]*>)/g, '\n$1\n');
+        html = html.replace(/\n{3,}/g, '\n\n');
+        
+        return html.trim();
+    }
+}
+
+      // 应用状态管理
+      class AppState {
+        constructor() {
+          this.currentProgress = 0;
+          this.eventSource = null;
+          this.currentFile = null;
+          this.currentTaskId = null;
+          this.stages = {
+            upload: { weight: 10, required: true },
+            transcribe: { weight: 40, required: true },
+            summary: { weight: 25, optional: true },
+            keypoints: { weight: 15, optional: true },
+            terms: { weight: 10, optional: true }
+          };
+        }
+        
+        reset() {
+          this.currentProgress = 0;
+          this.currentTaskId = null;
+          if (this.eventSource) {
+            this.eventSource.close();
+            this.eventSource = null;
+          }
+        }
+      }
+
+      // UI管理器
+      class UIManager {
+        constructor() {
+          this.appState = new AppState();
+          this.initializeEventListeners();
+          this.updateCurrentTime();
+        }
+        
+        initializeEventListeners() {
+          // 选项卡切换
+          document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+              const tabId = tab.getAttribute('data-tab');
+              this.switchTab(tabId);
+            });
+          });
+          
+          // 文件上传相关
+          const dropArea = document.getElementById('drop-area');
+          const fileInput = document.getElementById('file-input');
+          
+          ['dragenter', 'dragover'].forEach(evt => {
+            dropArea.addEventListener(evt, (e) => {
+              e.preventDefault();
+              dropArea.classList.add('dragover');
+            });
+          });
+          
+          ['dragleave', 'drop'].forEach(evt => {
+            dropArea.addEventListener(evt, (e) => {
+              e.preventDefault();
+              dropArea.classList.remove('dragover');
+            });
+          });
+          
+          dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files && e.dataTransfer.files.length) {
+              fileInput.files = e.dataTransfer.files;
+              this.handleFileSelect();
+            }
+          });
+          
+          dropArea.addEventListener('click', () => fileInput.click());
+          fileInput.addEventListener('change', () => this.handleFileSelect());
+          
+          // 选项切换 - 完整转录不可取消
+          document.querySelectorAll('.option-toggle').forEach(toggle => {
+            if (!toggle.classList.contains('required')) {
+              toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                this.updateSelectedOptions();
+              });
+            }
+          });
+          
+          // 提交按钮
+          document.getElementById('submit-btn').addEventListener('click', () => this.handleSubmit());
+        }
+        
+        switchTab(tabId) {
+          // 更新活动选项卡
+          document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+          });
+          document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+          
+          // 显示对应内容
+          document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+          });
+          document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+        
+        handleFileSelect() {
+          const fileInput = document.getElementById('file-input');
+          const fileInfo = document.getElementById('file-info');
+          const fileName = document.getElementById('file-name');
+          const fileSize = document.getElementById('file-size');
+          const currentFile = document.getElementById('current-file');
+          
+          if (fileInput.files && fileInput.files.length) {
+            const file = fileInput.files[0];
+            // 重要：每次选择文件时都更新当前文件
+            this.appState.currentFile = file;
+            
+            fileName.textContent = file.name;
+            fileSize.textContent = this.formatFileSize(file.size);
+            currentFile.textContent = file.name;
+            
+            fileInfo.classList.remove('hidden');
+            
+            // 重要：当选择新文件时，重置所有状态
+            this.resetUI();
+          } else {
+            fileInfo.classList.add('hidden');
+            currentFile.textContent = '未选择文件';
+            this.appState.currentFile = null;
+          }
+        }
+        
+        formatFileSize(bytes) {
+          if (bytes === 0) return '0 Bytes';
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        updateSelectedOptions() {
+          // 这里可以添加逻辑来更新侧边栏显示的选择项
+        }
+        
+        updateCurrentTime() {
+          const now = new Date();
+          const timeString = now.toTimeString().split(' ')[0];
+          document.getElementById('current-time').textContent = timeString;
+        }
+        
+        addLogEntry(message, type = 'info') {
+          const logContainer = document.getElementById('process-log');
+          const logEntry = document.createElement('div');
+          logEntry.className = `log-entry log-${type}`;
+          
+          const now = new Date();
+          const timeString = now.toTimeString().split(' ')[0];
+          
+          logEntry.innerHTML = `
+            <div class="log-time">${timeString}</div>
+            <div class="log-message">${message}</div>
+          `;
+          
+          logContainer.appendChild(logEntry);
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        setStageStatus(stage, status) {
+          const stageElement = document.getElementById(`status-${stage}`);
+          if (!stageElement) return;
+          
+          // 移除所有状态类
+          stageElement.classList.remove('pending', 'active', 'done', 'error');
+          
+          // 根据状态添加类
+          if (status === 'pending') {
+            stageElement.classList.add('pending');
+          } else if (status === 'started' || status === 'active') {
+            stageElement.classList.add('active');
+          } else if (status === 'done') {
+            stageElement.classList.add('done');
+          } else if (status === 'error') {
+            stageElement.classList.add('error');
+          }
+        }
+        
+        updateProgress(percent) {
+          document.getElementById('sidebar-progress-bar').style.width = `${percent}%`;
+          document.getElementById('progress-text').textContent = `${percent}%`;
+        }
+        
+        updateTranscriptionProgress(percent) {
+          // 转录进度更新
+          this.addLogEntry(`转录进度: ${percent}%`, 'info');
+        }
+        
+        makeDownloadButton(filename, text, label) {
+          const a = document.createElement('a');
+          const blob = new Blob([text], {type: 'text/markdown;charset=utf-8'});
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          a.className = 'download-btn';
+          
+          const icon = document.createElement('span');
+          icon.innerHTML = '📥';
+          a.appendChild(icon);
+          
+          const txt = document.createElement('span');
+          txt.textContent = label;
+          a.appendChild(txt);
+          
+          return a;
+        }
+        
+        // 修改：使用Typora样式渲染Markdown
+        renderMarkdown(content, elementId) {
+          const element = document.getElementById(elementId);
+          if (element && content) {
+            element.innerHTML = TyporaRenderer.render(content);
+            element.classList.add('typora-content');
+          }
+        }
+        
+        async handleSubmit() {
+          // 重要：每次提交时都重新获取文件输入
+          const fileInput = document.getElementById('file-input');
+          if (!fileInput.files || !fileInput.files.length) {
+            alert('请先选择音频文件');
+            return;
+          }
+          
+          // 重要：确保使用最新的文件
+          const currentFile = fileInput.files[0];
+          if (!currentFile) {
+            alert('文件选择无效，请重新选择');
+            return;
+          }
+          
+          const submitBtn = document.getElementById('submit-btn');
+          submitBtn.disabled = true;
+          submitBtn.textContent = '处理中...';
+          
+          // 重置UI状态
+          this.resetUI();
+          
+          // 切换到处理过程选项卡
+          this.switchTab('process');
+          
+          // 添加开始处理日志
+          this.addLogEntry('开始处理音频文件...', 'info');
+          
+          try {
+            // 创建FormData对象
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            formData.append('attendees', document.getElementById('attendees').value || '');
+            formData.append('meeting_topic', document.getElementById('meeting-topic').value || '');
+            formData.append('generate_summary', document.getElementById('toggle-summary').classList.contains('active'));
+            formData.append('generate_minutes', true); // 完整转录始终为true
+            formData.append('generate_keypoints', document.getElementById('toggle-keypoints').classList.contains('active'));
+            formData.append('generate_terms', document.getElementById('toggle-terms').classList.contains('active'));
+            
+            // 发送请求到后端
+            const response = await fetch('/api/process', {
+              method: 'POST',
+              body: formData
+            });
+            
+            if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            this.appState.currentTaskId = data.task_id;
+            
+            this.addLogEntry(`任务已创建，ID: ${data.task_id}`, 'success');
+            
+            // 连接到SSE事件流
+            this.connectToEventStream(data.task_id);
+            
+          } catch (error) {
+            this.addLogEntry(`处理失败: ${error.message}`, 'error');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '开始处理';
+          }
+        }
+        
+        connectToEventStream(taskId) {
+          // 关闭现有的连接
+          if (this.appState.eventSource) {
+            this.eventSource.close();
+          }
+          
+          // 创建新的EventSource连接
+          this.appState.eventSource = new EventSource(`/api/events/${taskId}`);
+          
+          this.appState.eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              this.handleEventData(data);
+            } catch (error) {
+              console.error('解析事件数据失败:', error);
+              this.addLogEntry('接收数据格式错误', 'error');
+            }
+          };
+          
+          this.appState.eventSource.onerror = (error) => {
+            console.error('SSE连接错误:', error);
+            this.addLogEntry('连接错误，尝试重新连接...', 'error');
+            
+            // 尝试重新连接
+            setTimeout(() => {
+              if (this.appState.currentTaskId) {
+                this.connectToEventStream(this.appState.currentTaskId);
+              }
+            }, 5000);
+          };
+        }
+        
+        handleEventData(data) {
+          // 处理转录进度更新
+          if (data.stage === 'transcribe' && data.progress !== undefined) {
+            this.updateTranscriptionProgress(data.progress);
+            return;
+          }
+          
+          // 处理阶段状态更新
+          if (data.stage && data.status) {
+            const stage = data.stage === 'key_points' ? 'keypoints' : data.stage;
+            
+            this.setStageStatus(stage, data.status);
+            
+            // 更新日志
+            const stageNames = {
+              'upload': '文件上传',
+              'transcribe': '语音转录',
+              'summary': '生成摘要',
+              'keypoints': '提取要点',
+              'terms': '术语解释'
+            };
+            
+            const statusText = data.status === 'pending' ? '准备中' :
+                              data.status === 'started' ? '开始' : 
+                              data.status === 'active' ? '处理中' :
+                              data.status === 'done' ? '完成' : 
+                              data.status === 'error' ? '失败' : data.status;
+            
+            this.addLogEntry(`${stageNames[stage] || stage} ${statusText}`, 
+                            data.status === 'error' ? 'error' : 
+                            data.status === 'done' ? 'success' : 
+                            data.status === 'pending' || data.status === 'active' ? 'info' : 'info');
+            
+            // 更新进度
+            if (data.status === 'started' || data.status === 'active') {
+              this.appState.currentProgress += this.appState.stages[stage].weight / 2;
+            } else if (data.status === 'done') {
+              this.appState.currentProgress += this.appState.stages[stage].weight / 2;
+            }
+            this.updateProgress(this.appState.currentProgress);
+            
+            // 更新结果内容
+            if (data.status === 'done') {
+              switch(stage) {
+                case 'transcribe':
+                  if (data.transcript) {
+                    this.renderMarkdown(data.transcript, 'transcript-content');
+                    document.getElementById('transcript-status').textContent = '已完成';
+                  }
+                  break;
+                case 'summary':
+                  if (data.summary) {
+                    this.renderMarkdown(data.summary, 'summary-content');
+                    document.getElementById('summary-status').textContent = '已完成';
+                  }
+                  break;
+                case 'keypoints':
+                  if (data.key_points) {
+                    const content = Array.isArray(data.key_points) ? 
+                      data.key_points.map(k => `- ${k}`).join('\n') : 
+                      String(data.key_points);
+                    this.renderMarkdown(content, 'keypoints-content');
+                    document.getElementById('keypoints-status').textContent = '已完成';
+                  }
+                  break;
+                case 'terms':
+                  if (data.technical_terms) {
+                    const content = Array.isArray(data.technical_terms) ? 
+                      data.technical_terms.map(t => `- ${t}`).join('\n') : 
+                      String(data.technical_terms);
+                    this.renderMarkdown(content, 'terms-content');
+                    document.getElementById('terms-status').textContent = '已完成';
+                  }
+                  break;
+              }
+            }
+          }
+          
+          // 处理完成事件
+          if (data.event === 'done') {
+            this.addLogEntry('所有处理步骤已完成', 'success');
+            this.updateProgress(100);
+            
+            // 创建下载按钮
+            const results = data.results || {};
+            this.createDownloadButtons(results);
+            
+            // 切换到输出选项卡
+            this.switchTab('output');
+            
+            // 重置提交按钮
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = '开始处理';
+            
+            // 关闭事件流
+            if (this.appState.eventSource) {
+              this.appState.eventSource.close();
+              this.appState.eventSource = null;
+            }
+          }
+        }
+        
+        createDownloadButtons(results) {
+          // 清空现有的下载按钮
+          document.getElementById('transcript-downloads').innerHTML = '';
+          document.getElementById('summary-downloads').innerHTML = '';
+          document.getElementById('keypoints-downloads').innerHTML = '';
+          document.getElementById('terms-downloads').innerHTML = '';
+          
+          // 创建下载按钮
+          if (results.transcript) {
+            document.getElementById('transcript-downloads').appendChild(
+              this.makeDownloadButton('transcript.md', `# 会议转录\n\n${results.transcript}`, '转录.md')
+            );
+          }
+          
+          if (results.summary) {
+            document.getElementById('summary-downloads').appendChild(
+              this.makeDownloadButton('summary.md', `# 会议摘要\n\n${results.summary}`, '摘要.md')
+            );
+          }
+          
+          if (results.key_points) {
+            const content = Array.isArray(results.key_points) ? 
+              results.key_points.map(k => `- ${k}`).join('\n') : 
+              String(results.key_points);
+            document.getElementById('keypoints-downloads').appendChild(
+              this.makeDownloadButton('key_points.md', `# 关键要点\n\n${content}`, '要点.md')
+            );
+          }
+          
+          if (results.technical_terms) {
+            const content = Array.isArray(results.technical_terms) ? 
+              results.technical_terms.map(t => `- ${t}`).join('\n') : 
+              String(results.technical_terms);
+            document.getElementById('terms-downloads').appendChild(
+              this.makeDownloadButton('terms.md', `# 专业术语\n\n${content}`, '术语.md')
+            );
+          }
+        }
+        
+        resetUI() {
+          // 重置应用状态
+          this.appState.reset();
+          
+          // 重置进度显示
+          this.updateProgress(0);
+          
+          // 重置阶段状态
+          Object.keys(this.appState.stages).forEach(stage => {
+            this.setStageStatus(stage, '');
+          });
+          
+          // 清空日志
+          document.getElementById('process-log').innerHTML = '';
+          this.addLogEntry('等待开始处理...', 'info');
+          
+          // 重置输出区域
+          document.getElementById('transcript-content').innerHTML = '（等待处理结果）';
+          document.getElementById('summary-content').innerHTML = '（等待处理结果）';
+          document.getElementById('keypoints-content').innerHTML = '（如选择"关键要点"选项，此处将显示提取结果）';
+          document.getElementById('terms-content').innerHTML = '（如选择"术语解释"选项，此处将显示解析结果）';
+          
+          document.getElementById('transcript-status').textContent = '等待处理';
+          document.getElementById('summary-status').textContent = '等待处理';
+          document.getElementById('keypoints-status').textContent = '未选择此选项';
+          document.getElementById('terms-status').textContent = '未选择此选项';
+          
+          // 清空下载按钮
+          document.getElementById('transcript-downloads').innerHTML = '';
+          document.getElementById('summary-downloads').innerHTML = '';
+          document.getElementById('keypoints-downloads').innerHTML = '';
+          document.getElementById('terms-downloads').innerHTML = '';
+        }
+      }
+
+      // 初始化应用
+      document.addEventListener('DOMContentLoaded', () => {
+        const uiManager = new UIManager();
+        
+        // 每秒更新一次时间
+        setInterval(() => {
+          uiManager.updateCurrentTime();
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>
