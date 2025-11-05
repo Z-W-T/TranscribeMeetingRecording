@@ -43,11 +43,14 @@ class TranscriptionAgent:
             str: 转录文字
         """
         # 如果已经转录过，直接返回缓存结果
-        if self.transcript:
+        if self.transcript and self.audio_input == audio_input:
             return self.transcript
-        transcript = self.speech_engine.transcribe(audio_input, progress_callback=progress_callback)
-        # with open('data/ifasr_output.md', 'r', encoding='utf-8') as f:
+        self.audio_input = audio_input  # 缓存音频输入
+        # with open(r'data/output/transcript.md', 'w', encoding='utf-8') as f:
         #     transcript = f.read()
+        # 调用语音识别引擎进行转录
+        transcript = self.speech_engine.transcribe(audio_input, progress_callback=progress_callback)
+
         # 生成对话格式
         transcript = self.minutes_generator.generate_transcript(transcript)
         self.transcript = transcript
@@ -55,35 +58,26 @@ class TranscriptionAgent:
     
     def generate_summary(
         self,
-        audio_input,
     ) -> str:
         """
         处理会议音频，生成转录和纪要
-        
-        Args:
-            audio_input: 音频文件路径或文件对象
             
         Returns:
             str: 会议纪要
         """
-        transcript = self.transcribe_audio(audio_input)
-        return self.minutes_generator.generate_summary(transcript)
+        return self.minutes_generator.generate_summary(self.transcript)
         
     
-    def extract_key_points(self, audio_input) -> List[str]:
+    def extract_key_points(self) -> List[str]:
         """
         从音频中提取关键要点
-        
-        Args:
-            audio_input: 音频文件路径或文件对象
             
         Returns:
             List[str]: 关键要点列表
         """
-        transcript = self.transcribe_audio(audio_input)
-        return self.minutes_generator.extract_key_points(transcript)
+        return self.minutes_generator.extract_key_points(self.transcript)
     
-    def explain_technical_terms(self, audio_input) -> List[str]:
+    def explain_technical_terms(self) -> List[str]:
         """
         解释音频中的技术术语
         
@@ -93,8 +87,7 @@ class TranscriptionAgent:
         Returns:
             Dict[str, str]: 术语及其解释的字典
         """
-        transcript = self.transcribe_audio(audio_input)
-        return self.minutes_generator.explain_technical_terms(transcript)
+        return self.minutes_generator.explain_technical_terms(self.transcript)
     
     def save_results(self, results: Dict, output_path: str = "output"):
         """
