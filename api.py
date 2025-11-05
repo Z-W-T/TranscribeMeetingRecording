@@ -48,7 +48,7 @@ if os.path.isdir(FRONTEND_DIR):
 
     @app.get("/")
     async def root_index():
-        index_path = os.path.join(FRONTEND_DIR, "index.html")
+        index_path = os.path.join(FRONTEND_DIR, "NewStyle_index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
         return Response(content="Frontend not found", status_code=404)
@@ -80,7 +80,6 @@ async def process_stage(queue, stage_name, processing_func, *args, result_key=No
     try:
         # 如果是转录阶段，实时进度更新
         if stage_name == "transcribe" and progress_callback:
-            progress_queue = asyncio.Queue()
 
             # 包装处理函数以支持进度回调
             def progress_callback_wrapper(progress):
@@ -101,7 +100,6 @@ async def process_stage(queue, stage_name, processing_func, *args, result_key=No
                     print(f"Failed to send progress update: {e}")
             
             # 在线程中执行处理函数，传入进度回调
-            print('Starting transcription with progress callback...')
             try:
                 result = await asyncio.to_thread(
                     processing_func, 
@@ -162,7 +160,6 @@ async def process_meeting(
             await queue.put(_json_dumps({"stage": "upload", "status": "done", "detail": os.path.basename(dest_path)}))
             
             # Transcription stage - 添加进度回调支持
-            print('Starting transcription...')
             transcript = await process_stage(
                 queue, 
                 "transcribe", 
@@ -179,13 +176,13 @@ async def process_meeting(
             
             # Summary stage
             if generate_summary:
-                summary = await process_stage(queue, "summary", agent.generate_summary, transcript)
+                summary = await process_stage(queue, "summary", agent.generate_summary)
                 if summary:
                     results["summary"] = summary
             
             # Key points stage
             if generate_keypoints:
-                key_points = await process_stage(queue, "key_points", agent.extract_key_points, transcript)
+                key_points = await process_stage(queue, "key_points", agent.extract_key_points)
                 if key_points:
                     results["key_points"] = key_points
             
@@ -195,10 +192,8 @@ async def process_meeting(
                     queue, 
                     "terms", 
                     agent.explain_technical_terms, 
-                    transcript
                 )
                 if terms:
-                    print('Technical terms explanation completed.')
                     results["technical_terms"] = terms
             
             # Final result - 确保结果键名与前端匹配
