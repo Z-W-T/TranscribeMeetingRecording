@@ -15,7 +15,7 @@ def example_meeting_transcription(agent, config):
     print("会议转录文本")
     print("=" * 60) 
     print("\n【转录文本】\n")
-    print(f'{transcript}')
+    print(f'{transcript}\n')
 
     return transcript
 
