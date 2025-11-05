@@ -3,7 +3,7 @@ import shutil
 import subprocess
 import tempfile
 import glob
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 from utils.ifasr_lib import Ifasr, orderResult  # vendor client and parser
 
@@ -86,27 +86,43 @@ class IfasrAPI:
         parts = sorted(glob.glob(os.path.join(tmpdir, 'part_*.wav')))
         return parts
 
-    def transcribe_audio(self, audio_file_path: str, chunk_seconds: Optional[int] = None) -> str:
+    def transcribe_audio(self, audio_file_path: str, chunk_seconds: Optional[int] = None, 
+                    progress_callback: Optional[Callable[[int], None]] = None) -> str:
         """Split original audio into multiple WAV parts, upload each part, wait
         for each part's transcription and return the concatenated full text.
 
         - audio_file_path: original audio (wav or other). Non-WAV will be converted.
         - chunk_seconds: seconds per chunk. If None, read from env IFASR_CHUNK_DURATION or default 300s.
+        - progress_callback: 进度回调函数，接收0-100的进度值
 
         Returns the combined transcript string for all parts in order.
         """
+        print(f'Starting IFASR transcription for file: {audio_file_path}')
         if chunk_seconds is None:
             try:
                 chunk_seconds = int(os.getenv('IFASR_CHUNK_DURATION', '300'))
             except Exception:
                 chunk_seconds = 300
 
+        # 初始化进度
+        if progress_callback:
+            progress_callback(0)  # 开始处理
+    
         wav_path, tmp_created = self._ensure_wav(audio_file_path)
+        
+        if progress_callback:
+            progress_callback(5)  # 音频格式转换完成
+        
         parts = []
         try:
             parts = self._split_wav_to_segments(wav_path, chunk_seconds)
-
+            
+            if progress_callback:
+                progress_callback(10)  # 音频分割完成
+            
             part_texts = []
+            total_parts = len(parts)
+            
             for idx, part in enumerate(parts, start=1):
                 client = self._client_cls(
                     appid=self.appid,
@@ -115,10 +131,18 @@ class IfasrAPI:
                     audio_file_path=part,
                 )
 
+                # 更新进度：基于已处理的块数
+                if progress_callback:
+                    # 计算当前进度：25% (分割完成) + (已处理块数/总块数) * 70%
+                    current_progress = 10 + int((idx / total_parts) * 70)
+                    progress_callback(min(current_progress, 95))  # 确保不超过95%
+
                 # after upload, blockingly fetch transcription for this part
                 try:
                     result = client.get_transcribe_result()
                 except Exception as e:
+                    if progress_callback:
+                        progress_callback(-1)  # 错误标识
                     raise RuntimeError(f'Failed to get transcribe result for part {idx}: {e}') from e
 
                 # parse the vendor result into text
@@ -135,7 +159,15 @@ class IfasrAPI:
 
             # join parts with double newline to preserve separations
             combined = '\n\n'.join([t for t in part_texts if t])
+            
+            if progress_callback:
+                progress_callback(100)  # 完成
+            
             return combined
+        except Exception as e:
+            if progress_callback:
+                progress_callback(-1)  # 错误标识
+            raise e
         finally:
             # clean up temporary files: split parts and converted wav if created
             for p in parts:

@@ -179,7 +179,7 @@ class XfyunAsrClient:
     def get_transcribe_result(self):
         """查询音频转写结果（轮询直到完成/超时）"""
         if not self.order_id:
-            print("未检测到订单ID，自动执行上传流程...")
+            print("\n未检测到订单ID，自动执行上传流程...")
             self.upload_audio()
         if not self.order_id:
             raise Exception("未获取到订单ID，无法查询转写结果")
