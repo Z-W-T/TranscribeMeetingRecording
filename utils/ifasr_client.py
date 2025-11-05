@@ -131,15 +131,15 @@ class IfasrAPI:
                     audio_file_path=part,
                 )
 
-                # 更新进度：基于已处理的块数
-                if progress_callback:
-                    # 计算当前进度：25% (分割完成) + (已处理块数/总块数) * 70%
-                    current_progress = 10 + int((idx / total_parts) * 70)
-                    progress_callback(min(current_progress, 95))  # 确保不超过95%
-
                 # after upload, blockingly fetch transcription for this part
                 try:
                     result = client.get_transcribe_result()
+                    
+                    # 更新进度：基于已处理的块数
+                    if progress_callback:
+                        # 计算当前进度：25% (分割完成) + (已处理块数/总块数) * 70%
+                        current_progress = 10 + int((idx / total_parts) * 70)
+                        progress_callback(min(current_progress, 95))  # 确保不超过95%
                 except Exception as e:
                     if progress_callback:
                         progress_callback(-1)  # 错误标识
