@@ -101,9 +101,7 @@ class XfyunAsrClient:
         audio_size = str(os.path.getsize(self.audio_file_path))  # 音频文件大小（字节）
         audio_name = os.path.basename(self.audio_file_path)      # 音频文件名
         date_time = self._get_local_time_with_tz()               # 带时区的本地时间
-        print(f"音频文件：{audio_name}")
-        print(f"文件大小：{audio_size} 字节")
-        print(f"音频时长：{self.audio_duration} 毫秒")  # 打印时长，方便验证
+        print(f"音频文件：{audio_name}\n文件大小：{audio_size} 字节\n音频时长：{self.audio_duration} 毫秒")  # 打印信息
 
         # 2. 构建URL参数 - duration字段为毫秒整数
         url_params = {
