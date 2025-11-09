@@ -47,7 +47,7 @@ class SpeechRecognitionEngine:
                 raise RuntimeError('IFASR provider selected but IFASR_APPID/IFASR_ACCESS_KEY_ID/IFASR_ACCESS_KEY_SECRET are not set in environment')
 
             ifasr = IfasrAPI(appid=self.ifasr_appid, access_key_id=self.ifasr_access_key_id, access_key_secret=self.ifasr_access_key_secret)
-            transcript = ifasr.transcribe_audio(audio_input_path, progress_callback=progress_callback)
+            transcript = ifasr.transcribe_audio_parallel(audio_input_path, progress_callback=progress_callback)
         else:
             whisper_api = WhisperAPI(api_key=self.api_key, model=self.model)
             transcript = whisper_api.transcribe_audio(audio_input_path)
