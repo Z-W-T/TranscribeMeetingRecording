@@ -678,6 +678,11 @@
         display: none;
       }
       
+      /* 调试样式 */
+      .debug-border {
+        border: 2px solid red !important;
+      }
+      
       /* 响应式设计 */
       @media (max-width: 768px) {
         body {
@@ -911,389 +916,297 @@
     </div>
 
     <script>
-      // Typora风格的Markdown渲染器
-class TyporaRenderer {
-    static render(text) {
-        if (!text) return '';
-        
-        let html = this.escapeHtml(text);
-        
-        // 处理顺序很重要
-        html = this.processCodeBlocks(html);
-        html = this.processBlockElements(html);
-        html = this.processInlineElements(html);
-        html = this.cleanupAndFormat(html);
-        
-        return html;
-    }
-    
-    static escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
-    static processCodeBlocks(text) {
-        let html = text.replace(/```([\s\S]*?)```/g, (match, code) => {
-            return `<pre><code>${this.escapeHtml(code.trim())}</code></pre>`;
-        });
-        
-        html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
-        return html;
-    }
-    
-    static processBlockElements(text) {
-        const lines = text.split('\n');
-        let result = [];
-        let listStack = []; // 用于跟踪嵌套列表
-        let currentContext = { type: 'paragraph', content: [] };
-        
-        const closeContext = () => {
-            if (currentContext.content.length > 0) {
-                const content = currentContext.content.join('\n').trim();
-                if (content) {
-                    result.push(this.formatBlock(currentContext.type, content));
-                }
-                currentContext.content = [];
-            }
-        };
-        
-        const closeAllLists = () => {
-            while (listStack.length > 0) {
-                const list = listStack.pop();
-                result.push(`</${list.type}>`);
-            }
-        };
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmedLine = line.trim();
-            
-            if (!trimmedLine) {
-                closeContext();
-                closeAllLists();
-                result.push('');
-                continue;
-            }
-            
-            // 检查是否为列表项
-            const listItem = this.parseListItem(line);
-            if (listItem) {
-                closeContext(); // 关闭段落上下文
-                
-                const indentLevel = this.getIndentLevel(line);
-                const listType = listItem.type === 'ol' ? 'ol' : 'ul';
-                
-                // 处理列表嵌套
-                while (listStack.length > 0 && listStack[listStack.length - 1].indentLevel >= indentLevel) {
-                    const closedList = listStack.pop();
-                    result.push(`</${closedList.type}>`);
-                }
-                
-                // 开启新列表（如果需要）
-                if (listStack.length === 0 || listStack[listStack.length - 1].indentLevel < indentLevel) {
-                    result.push(`<${listType}>`);
-                    listStack.push({ type: listType, indentLevel: indentLevel });
-                }
-                
-                // 添加列表项
-                result.push(`<li>${listItem.content}</li>`);
-                continue;
-            }
-            
-            // 非列表项
-            closeAllLists();
-            
-            const blockType = this.detectBlockType(line);
-            if (blockType !== currentContext.type) {
-                closeContext();
-                currentContext.type = blockType;
-            }
-            
-            currentContext.content.push(line);
-        }
-        
-        closeContext();
-        closeAllLists();
-        return result.join('\n');
-    }
-    
-    static detectBlockType(line) {
-        const trimmedLine = line.trim();
-        
-        // 标题检测
-        const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.*)$/);
-        if (headingMatch) {
-            return `h${headingMatch[1].length}`;
-        }
-        
-        // 水平线
-        if (trimmedLine.match(/^[-*_]{3,}$/)) {
-            return 'hr';
-        }
-        
-        // 块引用
-        if (trimmedLine.startsWith('>')) {
-            return 'blockquote';
-        }
-        
-        // 表格检测
-        if (trimmedLine.startsWith('|') && trimmedLine.endsWith('|')) {
-            return 'table';
-        }
-        
-        return 'paragraph';
-    }
-    
-    static getIndentLevel(line) {
-        const indentMatch = line.match(/^(\s*)/);
-        return indentMatch ? Math.floor(indentMatch[1].length / 4) : 0;
-    }
-    
-    static isListItem(line) {
-        return !!line.trim().match(/^([-*+]|\d+\.)\s+/);
-    }
-    
-    static parseListItem(line) {
-        const trimmedLine = line.trim();
-        const unorderedMatch = trimmedLine.match(/^([-*+])\s+(.*)$/);
-        if (unorderedMatch) {
-            return { type: 'ul', content: unorderedMatch[2] };
-        }
-        
-        const orderedMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
-        if (orderedMatch) {
-            return { type: 'ol', content: orderedMatch[2] };
-        }
-        
-        return null;
-    }
-    
-    static formatBlock(type, content) {
-        switch (type) {
-            case 'paragraph':
-                return this.formatParagraph(content);
-                
-            case 'hr':
-                return '<hr>';
-                
-            case 'blockquote':
-                return this.formatBlockquote(content);
-                
-            case 'table':
-                return this.formatTable(content);
-                
-            default:
-                if (type.startsWith('h')) {
-                    const level = type.substring(1);
-                    const text = content.replace(/^#{1,6}\s+/, '');
-                    return `<h${level}>${text}</h${level}>`;
-                }
-                return this.formatParagraph(content);
-        }
-    }
-    
-    static formatParagraph(content) {
-        const lines = content.split('\n');
-        if (lines.length === 1) {
-            return `<p>${content}</p>`;
-        }
-        
-        const formattedContent = lines.map(line => {
-            if (line.trim() === '') return '';
-            return line;
-        }).filter(line => line !== '').join('<br>');
-        
-        return `<p>${formattedContent}</p>`;
-    }
-    
-    static formatBlockquote(content) {
-        const quoteContent = content.split('\n')
-            .map(line => line.replace(/^>\s*/, ''))
-            .join('\n')
-            .trim();
-        return `<blockquote>${quoteContent}</blockquote>`;
-    }
-    
-    static formatTable(content) {
-        const lines = content.split('\n').filter(line => line.trim());
-        if (lines.length === 0) return '';
-        
-        let tableHtml = '<table>';
-        let inHeader = true;
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line.startsWith('|') || !line.endsWith('|')) continue;
-            
-            const cells = line.split('|')
-                .map(cell => cell.trim())
-                .filter(cell => cell);
-            
-            if (cells.every(cell => /^:?-+:?$/.test(cell))) {
-                inHeader = false;
-                continue;
-            }
-            
-            const tag = inHeader && i === 0 ? 'th' : 'td';
-            const rowHtml = cells.map(cell => `<${tag}>${cell}</${tag}>`).join('');
-            
-            if (inHeader && i === 0) {
-                tableHtml += `<thead><tr>${rowHtml}</tr></thead><tbody>`;
+         // ==================== 工具类 ====================
+      
+      // 简化的 Typora 渲染器
+      class TyporaRenderer {
+        static render(text) {
+          if (!text) return '';
+          
+          let html = this.escapeHtml(text);
+          
+          // 处理代码块
+          html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+          html = html.replace(/`([^`\n]+?)`/g, '<code>$1</code>');
+          
+          // 处理粗体和斜体
+          html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+          html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+          
+          // 处理标题
+          html = html.replace(/^#{1,6}\s+(.*)$/gm, (match, p1) => {
+            const level = match.match(/^#+/)[0].length;
+            return `<h${level}>${p1}</h${level}>`;
+          });
+          
+          // 处理列表
+          html = html.replace(/^[-*+]\s+(.*)$/gm, '<li>$1</li>');
+          html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+          
+          // 处理段落
+          const lines = html.split('\n');
+          const result = [];
+          let currentParagraph = [];
+          
+          for (const line of lines) {
+            if (line.trim() === '') {
+              if (currentParagraph.length > 0) {
+                result.push(`<p>${currentParagraph.join('<br>')}</p>`);
+                currentParagraph = [];
+              }
+              result.push('');
+            } else if (!line.startsWith('<')) {
+              currentParagraph.push(line);
             } else {
-                tableHtml += `<tr>${rowHtml}</tr>`;
+              if (currentParagraph.length > 0) {
+                result.push(`<p>${currentParagraph.join('<br>')}</p>`);
+                currentParagraph = [];
+              }
+              result.push(line);
             }
+          }
+          
+          if (currentParagraph.length > 0) {
+            result.push(`<p>${currentParagraph.join('<br>')}</p>`);
+          }
+          
+          return result.filter(line => line !== '').join('\n');
         }
         
-        tableHtml += '</tbody></table>';
-        return tableHtml;
-    }
-    
-    static processInlineElements(text) {
-        return text
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/__(.*?)__/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/_(.*?)_/g, '<em>$1</em>')
-            .replace(/~~(.*?)~~/g, '<del>$1</del>')
-            .replace(/!\[([^\]]+)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-    }
-    
-    static cleanupAndFormat(text) {
-        let html = text;
-        
-        // 清理空段落
-        html = html.replace(/<p><\/p>/g, '');
-        
-        // 确保合理的间距
-        html = html.replace(/(<\/?(h[1-6]|p|ul|ol|blockquote|table)[^>]*>)/g, '\n$1\n');
-        html = html.replace(/\n{3,}/g, '\n\n');
-        
-        return html.trim();
-    }
-}
+        static escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        }
+      }
 
       // 应用状态管理
       class AppState {
         constructor() {
-          this.currentProgress = 0;
-          this.eventSource = null;
-          this.currentFile = null;
-          this.currentTaskId = null;
-          this.stages = {
-            upload: { weight: 10, required: true },
-            transcribe: { weight: 40, required: true },
-            summary: { weight: 25, optional: true },
-            keypoints: { weight: 15, optional: true },
-            terms: { weight: 10, optional: true }
-          };
+          this.reset();
         }
         
         reset() {
           this.currentProgress = 0;
+          this.eventSource = null;
+          this.currentFile = null;
           this.currentTaskId = null;
-          if (this.eventSource) {
-            this.eventSource.close();
-            this.eventSource = null;
-          }
+          this.currentOptions = {};
         }
       }
 
-      // UI管理器
+      // ==================== 核心 UI 管理器 ====================
+      
       class UIManager {
         constructor() {
+          if (window.uiManager) {
+            return window.uiManager;
+          }
+          
           this.appState = new AppState();
-          this.initializeEventListeners();
-          this.updateCurrentTime();
+          this.isInitialized = false;
+          this.elements = {};
+          this.config = this.getConfig();
+          
+          window.uiManager = this;
+          this.initialize();
         }
         
-        initializeEventListeners() {
-          // 选项卡切换
-          document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-              const tabId = tab.getAttribute('data-tab');
-              this.switchTab(tabId);
-            });
-          });
+        // 配置常量
+        getConfig() {
+          return {
+            stageWeights: { upload: 10, transcribe: 40, summary: 25, keypoints: 15, terms: 10 },
+            stageLabels: { transcript: '完整转录', summary: '生成摘要', keypoints: '关键要点', terms: '术语解释' },
+            requiredStages: ['upload', 'transcribe'],
+            elementSelectors: {
+              // 选项卡
+              tabs: '.tab',
+              tabPanes: '.tab-pane',
+              
+              // 文件上传
+              dropArea: '#drop-area',
+              fileInput: '#file-input',
+              fileInfo: '#file-info',
+              fileName: '#file-name', 
+              fileSize: '#file-size',
+              currentFile: '#current-file',
+              
+              // 选项切换
+              optionToggles: '.option-toggle',
+              toggleSummary: '#toggle-summary',
+              toggleKeypoints: '#toggle-keypoints', 
+              toggleTerms: '#toggle-terms',
+              
+              // 按钮
+              submitBtn: '#submit-btn',
+              
+              // 状态显示
+              statusUpload: '#status-upload',
+              statusTranscribe: '#status-transcribe',
+              statusSummary: '#status-summary', 
+              statusKeypoints: '#status-keypoints',
+              statusTerms: '#status-terms',
+              
+              // 输出区域
+              outputStatus: {
+                transcript: '#transcript-status',
+                summary: '#summary-status', 
+                keypoints: '#keypoints-status',
+                terms: '#terms-status'
+              },
+              
+              outputContent: {
+                transcript: '#transcript-content',
+                summary: '#summary-content',
+                keypoints: '#keypoints-content', 
+                terms: '#terms-content'
+              },
+              
+              // 进度相关
+              progressBar: '#sidebar-progress-bar',
+              progressText: '#progress-text',
+              
+              // 日志相关
+              processLog: '#process-log',
+              currentTime: '#current-time',
+              
+              // 下载按钮
+              downloadContainers: {
+                transcript: '#transcript-downloads',
+                summary: '#summary-downloads',
+                keypoints: '#keypoints-downloads',
+                terms: '#terms-downloads'
+              }
+            }
+          };
+        }
+        
+        // 初始化
+        async initialize() {
+          try {
+            if (document.readyState === 'loading') {
+              await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+            }
+            
+            this.cacheElements();
+            this.setupEventListeners();
+            this.updateCurrentTime();
+            this.updateUI();
+            
+            this.isInitialized = true;
+            console.log('✅ UI管理器初始化完成');
+          } catch (error) {
+            console.error('❌ 初始化失败:', error);
+          }
+        }
+        
+        // 缓存DOM元素
+        cacheElements() {
+          const selectors = this.config.elementSelectors;
           
-          // 文件上传相关
-          const dropArea = document.getElementById('drop-area');
-          const fileInput = document.getElementById('file-input');
-          
-          ['dragenter', 'dragover'].forEach(evt => {
-            dropArea.addEventListener(evt, (e) => {
-              e.preventDefault();
-              dropArea.classList.add('dragover');
-            });
-          });
-          
-          ['dragleave', 'drop'].forEach(evt => {
-            dropArea.addEventListener(evt, (e) => {
-              e.preventDefault();
-              dropArea.classList.remove('dragover');
-            });
-          });
-          
-          dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            if (e.dataTransfer.files && e.dataTransfer.files.length) {
-              fileInput.files = e.dataTransfer.files;
-              this.handleFileSelect();
+          // 缓存简单元素
+          Object.keys(selectors).forEach(key => {
+            if (typeof selectors[key] === 'string') {
+              this.elements[key] = document.querySelector(selectors[key]);
             }
           });
           
+          // 缓存节点列表
+          this.elements.tabs = document.querySelectorAll(selectors.tabs);
+          this.elements.tabPanes = document.querySelectorAll(selectors.tabPanes);
+          this.elements.optionToggles = document.querySelectorAll(selectors.optionToggles);
+          
+          // 缓存复杂结构
+          this.elements.statusElements = {
+            upload: document.querySelector(selectors.statusUpload),
+            transcribe: document.querySelector(selectors.statusTranscribe),
+            summary: document.querySelector(selectors.statusSummary),
+            keypoints: document.querySelector(selectors.statusKeypoints),
+            terms: document.querySelector(selectors.statusTerms)
+          };
+          
+          this.elements.outputStatus = {};
+          this.elements.outputContent = {};
+          this.elements.downloadContainers = {};
+          
+          Object.keys(selectors.outputStatus).forEach(key => {
+            this.elements.outputStatus[key] = document.querySelector(selectors.outputStatus[key]);
+            this.elements.outputContent[key] = document.querySelector(selectors.outputContent[key]);
+            this.elements.downloadContainers[key] = document.querySelector(selectors.downloadContainers[key]);
+          });
+        }
+        
+        // 事件监听器设置
+        setupEventListeners() {
+          // 选项卡切换
+          this.elements.tabs.forEach(tab => {
+            tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+          });
+          
+          // 文件上传
+          const { dropArea, fileInput } = this.elements;
+          ['dragenter', 'dragover'].forEach(evt => {
+            dropArea.addEventListener(evt, e => this.handleDrag(e, true));
+          });
+          ['dragleave', 'drop'].forEach(evt => {
+            dropArea.addEventListener(evt, e => this.handleDrag(e, false));
+          });
+          dropArea.addEventListener('drop', e => this.handleFileDrop(e));
           dropArea.addEventListener('click', () => fileInput.click());
           fileInput.addEventListener('change', () => this.handleFileSelect());
           
-          // 选项切换 - 完整转录不可取消
-          document.querySelectorAll('.option-toggle').forEach(toggle => {
+          // 选项切换
+          this.elements.optionToggles.forEach(toggle => {
             if (!toggle.classList.contains('required')) {
-              toggle.addEventListener('click', () => {
-                toggle.classList.toggle('active');
-                this.updateSelectedOptions();
-              });
+              toggle.addEventListener('click', () => this.toggleOption(toggle));
             }
           });
           
           // 提交按钮
-          document.getElementById('submit-btn').addEventListener('click', () => this.handleSubmit());
+          this.elements.submitBtn.addEventListener('click', () => this.handleSubmit());
+          
+          // 时间更新
+          setInterval(() => this.updateCurrentTime(), 1000);
         }
         
+        // ==================== 核心功能方法 ====================
+        
+        // 选项卡切换
         switchTab(tabId) {
-          // 更新活动选项卡
-          document.querySelectorAll('.tab').forEach(tab => {
-            tab.classList.remove('active');
-          });
-          document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+          // 更新选项卡
+          this.elements.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tab === tabId));
           
-          // 显示对应内容
-          document.querySelectorAll('.tab-pane').forEach(pane => {
-            pane.classList.remove('active');
+          // 更新内容
+          this.elements.tabPanes.forEach(pane => {
+            pane.classList.toggle('active', pane.id === `${tabId}-tab`);
           });
-          document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+        
+        // 文件处理
+        handleDrag(e, isOver) {
+          e.preventDefault();
+          this.elements.dropArea.classList.toggle('dragover', isOver);
+        }
+        
+        handleFileDrop(e) {
+          e.preventDefault();
+          if (e.dataTransfer.files.length) {
+            this.elements.fileInput.files = e.dataTransfer.files;
+            this.handleFileSelect();
+          }
         }
         
         handleFileSelect() {
-          const fileInput = document.getElementById('file-input');
-          const fileInfo = document.getElementById('file-info');
-          const fileName = document.getElementById('file-name');
-          const fileSize = document.getElementById('file-size');
-          const currentFile = document.getElementById('current-file');
+          const { fileInput, fileInfo, fileName, fileSize, currentFile } = this.elements;
           
-          if (fileInput.files && fileInput.files.length) {
+          if (fileInput.files.length) {
             const file = fileInput.files[0];
-            // 重要：每次选择文件时都更新当前文件
             this.appState.currentFile = file;
             
             fileName.textContent = file.name;
             fileSize.textContent = this.formatFileSize(file.size);
             currentFile.textContent = file.name;
-            
             fileInfo.classList.remove('hidden');
-            
-            // 重要：当选择新文件时，重置所有状态
-            this.resetUI();
           } else {
             fileInfo.classList.add('hidden');
             currentFile.textContent = '未选择文件';
@@ -1301,32 +1214,97 @@ class TyporaRenderer {
           }
         }
         
-        formatFileSize(bytes) {
-          if (bytes === 0) return '0 Bytes';
-          const k = 1024;
-          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-          const i = Math.floor(Math.log(bytes) / Math.log(k));
-          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        // 选项切换
+        toggleOption(toggle) {
+          toggle.classList.toggle('active');
+          this.updateUI();
         }
         
-        updateSelectedOptions() {
-          // 这里可以添加逻辑来更新侧边栏显示的选择项
+        // 更新界面状态
+        updateUI() {
+          const options = this.getCurrentOptions();
+          this.updateStatusDisplay(options);
+          this.updateOutputDisplay(options);
+          this.appState.currentOptions = options;
         }
         
-        updateCurrentTime() {
+        getCurrentOptions() {
+          return {
+            summary: this.elements.toggleSummary.classList.contains('active'),
+            keypoints: this.elements.toggleKeypoints.classList.contains('active'),
+            terms: this.elements.toggleTerms.classList.contains('active')
+          };
+        }
+        
+        updateStatusDisplay(options) {
+          // 必需功能始终启用
+          this.config.requiredStages.forEach(stage => {
+            const element = this.elements.statusElements[stage];
+            if (element) {
+              element.classList.add('pending');
+              element.style.opacity = '1';
+            }
+          });
+          
+          // 可选功能根据选择状态更新
+          Object.keys(options).forEach(stage => {
+            const element = this.elements.statusElements[stage];
+            if (element) {
+              element.classList.toggle('pending', options[stage]);
+              element.style.opacity = options[stage] ? '1' : '0.6';
+            }
+          });
+        }
+        
+        updateOutputDisplay(options) {
+          // 完整转录始终启用
+          this.updateOutputSection('transcript', true);
+          
+          // 可选功能根据选择状态更新
+          Object.keys(options).forEach(section => {
+            this.updateOutputSection(section, options[section]);
+          });
+        }
+        
+        updateOutputSection(section, isEnabled) {
+          const statusElement = this.elements.outputStatus[section];
+          const contentElement = this.elements.outputContent[section];
+          
+          if (statusElement && contentElement) {
+            if (isEnabled) {
+              statusElement.textContent = '等待处理';
+              statusElement.style.color = '';
+              contentElement.innerHTML = '（等待处理结果）';
+              contentElement.style.opacity = '1';
+            } else {
+              statusElement.textContent = '未选择此功能';
+              statusElement.style.color = 'var(--text-light)';
+              contentElement.innerHTML = `（如选择"${this.config.stageLabels[section]}"选项，此处将显示处理结果）`;
+              contentElement.style.opacity = '0.6';
+            }
+          }
+        }
+        
+        // 进度管理
+        updateProgress(percent) {
+          if (this.elements.progressBar) {
+            this.elements.progressBar.style.width = `${percent}%`;
+          }
+          if (this.elements.progressText) {
+            this.elements.progressText.textContent = `${percent}%`;
+          }
+        }
+        
+        // 日志管理
+        addLog(message, type = 'info') {
+          const logContainer = this.elements.processLog;
+          if (!logContainer) return;
+          
           const now = new Date();
           const timeString = now.toTimeString().split(' ')[0];
-          document.getElementById('current-time').textContent = timeString;
-        }
-        
-        addLogEntry(message, type = 'info') {
-          const logContainer = document.getElementById('process-log');
+          
           const logEntry = document.createElement('div');
           logEntry.className = `log-entry log-${type}`;
-          
-          const now = new Date();
-          const timeString = now.toTimeString().split(' ')[0];
-          
           logEntry.innerHTML = `
             <div class="log-time">${timeString}</div>
             <div class="log-message">${message}</div>
@@ -1336,134 +1314,66 @@ class TyporaRenderer {
           logContainer.scrollTop = logContainer.scrollHeight;
         }
         
-        setStageStatus(stage, status) {
-          const stageElement = document.getElementById(`status-${stage}`);
-          if (!stageElement) return;
-          
-          // 移除所有状态类
-          stageElement.classList.remove('pending', 'active', 'done', 'error');
-          
-          // 根据状态添加类
-          if (status === 'pending') {
-            stageElement.classList.add('pending');
-          } else if (status === 'started' || status === 'active') {
-            stageElement.classList.add('active');
-          } else if (status === 'done') {
-            stageElement.classList.add('done');
-          } else if (status === 'error') {
-            stageElement.classList.add('error');
-          }
-        }
-        
-        updateProgress(percent) {
-          document.getElementById('sidebar-progress-bar').style.width = `${percent}%`;
-          document.getElementById('progress-text').textContent = `${percent}%`;
-        }
-        
-        updateTranscriptionProgress(percent) {
-          // 转录进度更新
-          this.addLogEntry(`转录进度: ${percent}%`, 'info');
-        }
-        
-        makeDownloadButton(filename, text, label) {
-          const a = document.createElement('a');
-          const blob = new Blob([text], {type: 'text/markdown;charset=utf-8'});
-          a.href = URL.createObjectURL(blob);
-          a.download = filename;
-          a.className = 'download-btn';
-          
-          const icon = document.createElement('span');
-          icon.innerHTML = '📥';
-          a.appendChild(icon);
-          
-          const txt = document.createElement('span');
-          txt.textContent = label;
-          a.appendChild(txt);
-          
-          return a;
-        }
-        
-        // 修改：使用Typora样式渲染Markdown
-        renderMarkdown(content, elementId) {
-          const element = document.getElementById(elementId);
-          if (element && content) {
-            element.innerHTML = TyporaRenderer.render(content);
-            element.classList.add('typora-content');
-          }
-        }
+        // ==================== 表单提交和处理 ====================
         
         async handleSubmit() {
-          // 重要：每次提交时都重新获取文件输入
-          const fileInput = document.getElementById('file-input');
-          if (!fileInput.files || !fileInput.files.length) {
-            alert('请先选择音频文件');
-            return;
-          }
+          const { submitBtn, fileInput } = this.elements;
           
-          // 重要：确保使用最新的文件
-          const currentFile = fileInput.files[0];
-          if (!currentFile) {
-            alert('文件选择无效，请重新选择');
-            return;
-          }
+          if (!this.validateFileInput()) return;
           
-          const submitBtn = document.getElementById('submit-btn');
           submitBtn.disabled = true;
           submitBtn.textContent = '处理中...';
           
-          // 重置UI状态
           this.resetUI();
-          
-          // 切换到处理过程选项卡
           this.switchTab('process');
-          
-          // 添加开始处理日志
-          this.addLogEntry('开始处理音频文件...', 'info');
+          this.addLog('开始处理音频文件...');
           
           try {
-            // 创建FormData对象
-            const formData = new FormData();
-            formData.append('file', currentFile);
-            formData.append('attendees', document.getElementById('attendees').value || '');
-            formData.append('meeting_topic', document.getElementById('meeting-topic').value || '');
-            formData.append('generate_summary', document.getElementById('toggle-summary').classList.contains('active'));
-            formData.append('generate_minutes', true); // 完整转录始终为true
-            formData.append('generate_keypoints', document.getElementById('toggle-keypoints').classList.contains('active'));
-            formData.append('generate_terms', document.getElementById('toggle-terms').classList.contains('active'));
+            const formData = this.createFormData();
+            const response = await fetch('/api/process', { method: 'POST', body: formData });
             
-            // 发送请求到后端
-            const response = await fetch('/api/process', {
-              method: 'POST',
-              body: formData
-            });
-            
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
             const data = await response.json();
             this.appState.currentTaskId = data.task_id;
+            this.addLog(`任务已创建，ID: ${data.task_id}`, 'success');
             
-            this.addLogEntry(`任务已创建，ID: ${data.task_id}`, 'success');
-            
-            // 连接到SSE事件流
             this.connectToEventStream(data.task_id);
-            
           } catch (error) {
-            this.addLogEntry(`处理失败: ${error.message}`, 'error');
+            this.addLog(`处理失败: ${error.message}`, 'error');
             submitBtn.disabled = false;
             submitBtn.textContent = '开始处理';
           }
         }
         
+        validateFileInput() {
+          if (!this.elements.fileInput.files.length) {
+            alert('请先选择音频文件');
+            return false;
+          }
+          return true;
+        }
+        
+        createFormData() {
+          const formData = new FormData();
+          formData.append('file', this.elements.fileInput.files[0]);
+          formData.append('attendees', document.getElementById('attendees').value || '');
+          formData.append('meeting_topic', document.getElementById('meeting-topic').value || '');
+          formData.append('generate_summary', this.elements.toggleSummary.classList.contains('active'));
+          formData.append('generate_minutes', true);
+          formData.append('generate_keypoints', this.elements.toggleKeypoints.classList.contains('active'));
+          formData.append('generate_terms', this.elements.toggleTerms.classList.contains('active'));
+          
+          return formData;
+        }
+        
+        // ==================== SSE 事件处理 ====================
+        
         connectToEventStream(taskId) {
-          // 关闭现有的连接
           if (this.appState.eventSource) {
-            this.eventSource.close();
+            this.appState.eventSource.close();
           }
           
-          // 创建新的EventSource连接
           this.appState.eventSource = new EventSource(`/api/events/${taskId}`);
           
           this.appState.eventSource.onmessage = (event) => {
@@ -1471,16 +1381,12 @@ class TyporaRenderer {
               const data = JSON.parse(event.data);
               this.handleEventData(data);
             } catch (error) {
-              console.error('解析事件数据失败:', error);
-              this.addLogEntry('接收数据格式错误', 'error');
+              this.addLog('接收数据格式错误', 'error');
             }
           };
           
           this.appState.eventSource.onerror = (error) => {
-            console.error('SSE连接错误:', error);
-            this.addLogEntry('连接错误，尝试重新连接...', 'error');
-            
-            // 尝试重新连接
+            this.addLog('连接错误，尝试重新连接...', 'error');
             setTimeout(() => {
               if (this.appState.currentTaskId) {
                 this.connectToEventStream(this.appState.currentTaskId);
@@ -1490,190 +1396,216 @@ class TyporaRenderer {
         }
         
         handleEventData(data) {
-          // 处理转录进度更新
-          if (data.stage === 'transcribe' && data.progress !== undefined) {
-            this.updateTranscriptionProgress(data.progress);
-            return;
-          }
-          
-          // 处理阶段状态更新
           if (data.stage && data.status) {
-            const stage = data.stage === 'key_points' ? 'keypoints' : data.stage;
-            
-            this.setStageStatus(stage, data.status);
-            
-            // 更新日志
-            const stageNames = {
-              'upload': '文件上传',
-              'transcribe': '语音转录',
-              'summary': '生成摘要',
-              'keypoints': '提取要点',
-              'terms': '术语解释'
-            };
-            
-            const statusText = data.status === 'pending' ? '准备中' :
-                              data.status === 'started' ? '开始' : 
-                              data.status === 'active' ? '处理中' :
-                              data.status === 'done' ? '完成' : 
-                              data.status === 'error' ? '失败' : data.status;
-            
-            this.addLogEntry(`${stageNames[stage] || stage} ${statusText}`, 
-                            data.status === 'error' ? 'error' : 
-                            data.status === 'done' ? 'success' : 
-                            data.status === 'pending' || data.status === 'active' ? 'info' : 'info');
-            
-            // 更新进度
-            if (data.status === 'started' || data.status === 'active') {
-              this.appState.currentProgress += this.appState.stages[stage].weight / 2;
-            } else if (data.status === 'done') {
-              this.appState.currentProgress += this.appState.stages[stage].weight / 2;
-            }
-            this.updateProgress(this.appState.currentProgress);
-            
-            // 更新结果内容
-            if (data.status === 'done') {
-              switch(stage) {
-                case 'transcribe':
-                  if (data.transcript) {
-                    this.renderMarkdown(data.transcript, 'transcript-content');
-                    document.getElementById('transcript-status').textContent = '已完成';
-                  }
-                  break;
-                case 'summary':
-                  if (data.summary) {
-                    this.renderMarkdown(data.summary, 'summary-content');
-                    document.getElementById('summary-status').textContent = '已完成';
-                  }
-                  break;
-                case 'keypoints':
-                  if (data.key_points) {
-                    const content = Array.isArray(data.key_points) ? 
-                      data.key_points.map(k => `- ${k}`).join('\n') : 
-                      String(data.key_points);
-                    this.renderMarkdown(content, 'keypoints-content');
-                    document.getElementById('keypoints-status').textContent = '已完成';
-                  }
-                  break;
-                case 'terms':
-                  if (data.technical_terms) {
-                    const content = Array.isArray(data.technical_terms) ? 
-                      data.technical_terms.map(t => `- ${t}`).join('\n') : 
-                      String(data.technical_terms);
-                    this.renderMarkdown(content, 'terms-content');
-                    document.getElementById('terms-status').textContent = '已完成';
-                  }
-                  break;
-              }
-            }
+            this.handleStageUpdate(data);
           }
           
-          // 处理完成事件
           if (data.event === 'done') {
-            this.addLogEntry('所有处理步骤已完成', 'success');
-            this.updateProgress(100);
-            
-            // 创建下载按钮
-            const results = data.results || {};
-            this.createDownloadButtons(results);
-            
-            // 切换到输出选项卡
-            this.switchTab('output');
-            
-            // 重置提交按钮
-            const submitBtn = document.getElementById('submit-btn');
-            submitBtn.disabled = false;
-            submitBtn.textContent = '开始处理';
-            
-            // 关闭事件流
-            if (this.appState.eventSource) {
-              this.appState.eventSource.close();
-              this.appState.eventSource = null;
-            }
+            this.handleProcessComplete(data);
+          }
+        }
+        
+        handleStageUpdate(data) {
+          const stage = data.stage === 'key_points' ? 'keypoints' : data.stage;
+          
+          // 更新状态显示
+          this.setStageStatus(stage, data.status);
+          
+          // 添加日志
+          this.addStageLog(stage, data.status);
+          
+          // 更新进度
+          this.updateProgressForStage(stage, data.status);
+          
+          // 处理完成的结果
+          if (data.status === 'done') {
+            console.log(`✅ 阶段完成: ${data.stage}`, data);
+            this.updateStageResult(stage, data);
+          }
+        }
+        
+        setStageStatus(stage, status) {
+          const element = this.elements.statusElements[stage];
+          if (!element) return;
+          
+          element.className = element.className.replace(/\b(pending|active|done|error)\b/g, '');
+          if (status) element.classList.add(status);
+        }
+        
+        addStageLog(stage, status) {
+          const stageNames = {
+            upload: '文件上传', transcribe: '语音转录', summary: '生成摘要', 
+            keypoints: '提取要点', terms: '术语解释'
+          };
+          
+          const statusText = {
+            pending: '准备中', started: '开始', active: '处理中', 
+            done: '完成', error: '失败'
+          }[status] || status;
+          
+          const type = status === 'error' ? 'error' : status === 'done' ? 'success' : 'info';
+          this.addLog(`${stageNames[stage] || stage} ${statusText}`, type);
+        }
+        
+        updateProgressForStage(stage, status) {
+          const weight = this.config.stageWeights[stage];
+          if (!weight) return;
+          
+          let increment = 0;
+          if (['started', 'active'].includes(status)) increment = weight / 2;
+          else if (status === 'done') increment = weight / 2;
+          
+          this.appState.currentProgress = Math.min(this.appState.currentProgress + increment, 100);
+          this.updateProgress(this.appState.currentProgress);
+        }
+        
+          updateStageResult(stage, data) {
+          const contentKey = {
+            transcribe: 'transcript',
+            summary: 'summary', 
+            keypoints: 'key_points',
+            terms: 'technical_terms'
+          }[stage];
+
+          if (stage === 'transcribe') stage = 'transcript';
+          console.log('更新阶段结果:', stage, contentKey, data[contentKey]);
+          
+          if (!contentKey || !data[contentKey]) return;
+          
+          const contentElement = this.elements.outputContent[stage];
+          const statusElement = this.elements.outputStatus[stage];
+          
+          if (!contentElement || !statusElement) return;
+          
+          // 处理内容
+          let content = data[contentKey];
+          if (Array.isArray(content)) {
+            content = content.map(item => `- ${item}`).join('\n');
+          }
+          
+          // 渲染Markdown
+          contentElement.innerHTML = TyporaRenderer.render(content);
+          contentElement.classList.add('typora-content');
+          
+          // 更新状态
+          statusElement.textContent = '已完成';
+          statusElement.style.color = 'var(--success)';
+        }
+        
+        handleProcessComplete(data) {
+          this.addLog('所有处理步骤已完成', 'success');
+          this.updateProgress(100);
+          this.createDownloadButtons(data.results || {});
+          this.switchTab('output');
+          this.resetSubmitButton();
+          
+          if (this.appState.eventSource) {
+            this.appState.eventSource.close();
+            this.appState.eventSource = null;
           }
         }
         
         createDownloadButtons(results) {
-          // 清空现有的下载按钮
-          document.getElementById('transcript-downloads').innerHTML = '';
-          document.getElementById('summary-downloads').innerHTML = '';
-          document.getElementById('keypoints-downloads').innerHTML = '';
-          document.getElementById('terms-downloads').innerHTML = '';
+          this.clearDownloadButtons();
           
-          // 创建下载按钮
-          if (results.transcript) {
-            document.getElementById('transcript-downloads').appendChild(
-              this.makeDownloadButton('transcript.md', `# 会议转录\n\n${results.transcript}`, '转录.md')
-            );
-          }
+          const downloadConfig = {
+            transcript: { content: results.transcript, filename: '会议转录.md', label: '下载转录' },
+            summary: { content: results.summary, filename: '会议摘要.md', label: '下载摘要' },
+            keypoints: { content: results.key_points, filename: '关键要点.md', label: '下载要点' },
+            terms: { content: results.technical_terms, filename: '专业术语.md', label: '下载术语' }
+          };
           
-          if (results.summary) {
-            document.getElementById('summary-downloads').appendChild(
-              this.makeDownloadButton('summary.md', `# 会议摘要\n\n${results.summary}`, '摘要.md')
-            );
-          }
+          Object.keys(downloadConfig).forEach(section => {
+            const config = downloadConfig[section];
+            if (config.content) {
+              this.createDownloadButton(section, config.content, config.filename, config.label);
+            }
+          });
+        }
+        
+        createDownloadButton(section, content, filename, label) {
+          const container = this.elements.downloadContainers[section];
+          if (!container) return;
           
-          if (results.key_points) {
-            const content = Array.isArray(results.key_points) ? 
-              results.key_points.map(k => `- ${k}`).join('\n') : 
-              String(results.key_points);
-            document.getElementById('keypoints-downloads').appendChild(
-              this.makeDownloadButton('key_points.md', `# 关键要点\n\n${content}`, '要点.md')
-            );
-          }
+          // 处理内容
+          let downloadContent = Array.isArray(content) ? 
+            content.map(item => `- ${item}`).join('\n') : content;
           
-          if (results.technical_terms) {
-            const content = Array.isArray(results.technical_terms) ? 
-              results.technical_terms.map(t => `- ${t}`).join('\n') : 
-              String(results.technical_terms);
-            document.getElementById('terms-downloads').appendChild(
-              this.makeDownloadButton('terms.md', `# 专业术语\n\n${content}`, '术语.md')
-            );
+          // 创建下载链接
+          const a = document.createElement('a');
+          a.className = 'download-btn';
+          a.innerHTML = `📥 ${label}`;
+          
+          const blob = new Blob([downloadContent], { type: 'text/markdown' });
+          a.href = URL.createObjectURL(blob);
+          a.download = filename;
+          
+          a.addEventListener('click', () => {
+            setTimeout(() => URL.revokeObjectURL(a.href), 100);
+          });
+          
+          container.appendChild(a);
+        }
+        
+        clearDownloadButtons() {
+          Object.values(this.elements.downloadContainers).forEach(container => {
+            if (container) container.innerHTML = '';
+          });
+        }
+        
+        // ==================== 工具方法 ====================
+        
+        formatFileSize(bytes) {
+          if (bytes === 0) return '0 Bytes';
+          const k = 1024;
+          const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        updateCurrentTime() {
+          if (this.elements.currentTime) {
+            this.elements.currentTime.textContent = new Date().toTimeString().split(' ')[0];
           }
         }
         
         resetUI() {
-          // 重置应用状态
           this.appState.reset();
-          
-          // 重置进度显示
           this.updateProgress(0);
           
-          // 重置阶段状态
-          Object.keys(this.appState.stages).forEach(stage => {
-            this.setStageStatus(stage, '');
+          // 重置状态显示
+          Object.values(this.elements.statusElements).forEach(element => {
+            if (element) element.className = element.className.replace(/\b(pending|active|done|error)\b/g, '');
           });
           
           // 清空日志
-          document.getElementById('process-log').innerHTML = '';
-          this.addLogEntry('等待开始处理...', 'info');
+          if (this.elements.processLog) {
+            this.elements.processLog.innerHTML = '';
+          }
+          this.addLog('等待开始处理...');
           
-          // 重置输出区域
-          document.getElementById('transcript-content').innerHTML = '（等待处理结果）';
-          document.getElementById('summary-content').innerHTML = '（等待处理结果）';
-          document.getElementById('keypoints-content').innerHTML = '（如选择"关键要点"选项，此处将显示提取结果）';
-          document.getElementById('terms-content').innerHTML = '（如选择"术语解释"选项，此处将显示解析结果）';
-          
-          document.getElementById('transcript-status').textContent = '等待处理';
-          document.getElementById('summary-status').textContent = '等待处理';
-          document.getElementById('keypoints-status').textContent = '未选择此选项';
-          document.getElementById('terms-status').textContent = '未选择此选项';
-          
-          // 清空下载按钮
-          document.getElementById('transcript-downloads').innerHTML = '';
-          document.getElementById('summary-downloads').innerHTML = '';
-          document.getElementById('keypoints-downloads').innerHTML = '';
-          document.getElementById('terms-downloads').innerHTML = '';
+          // 重置界面
+          this.updateUI();
+          this.clearDownloadButtons();
+        }
+        
+        resetSubmitButton() {
+          this.elements.submitBtn.disabled = false;
+          this.elements.submitBtn.textContent = '开始处理';
         }
       }
 
-      // 初始化应用
+      // ==================== 应用初始化 ====================
+      
       document.addEventListener('DOMContentLoaded', () => {
-        const uiManager = new UIManager();
+        // 创建全局UI管理器实例
+        window.uiManager = new UIManager();
         
-        // 每秒更新一次时间
-        setInterval(() => {
-          uiManager.updateCurrentTime();
-        }, 1000);
+        // 添加调试工具
+        window.debugUI = () => {
+          console.log('UI管理器:', window.uiManager);
+          console.log('是否初始化:', window.uiManager.isInitialized);
+        };
       });
     </script>
   </body>
