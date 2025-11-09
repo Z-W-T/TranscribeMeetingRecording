@@ -10,3 +10,5 @@ __pycache__/
 
 # 忽略输出
 data/
+build/
+dist/
