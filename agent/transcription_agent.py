@@ -53,6 +53,7 @@ class TranscriptionAgent:
 
         # 生成对话格式
         transcript = self.minutes_generator.generate_transcript(transcript)
+        progress_callback(100) if progress_callback else None
         self.transcript = transcript
         return self.transcript
     
